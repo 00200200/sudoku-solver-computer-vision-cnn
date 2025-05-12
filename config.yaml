@@ -1,0 +1,24 @@
+# DATA 
+datasets:
+  - name: mnist
+    url: "https://path.to/mnist/dataset"
+    datarawdirectory: data/raw/mnist/
+    datainterimdirectory: data/interim/mnist/
+    dataprocesseddirectory: data/processed/mnist/
+
+  - name: sudoku
+    url: "https://www.kaggle.com/datasets/mexwell/sudoku-image-dataset"
+    datarawdirectory: data/raw/sudoku/
+    datainterimdirectory: data/interim/sudoku/
+    dataprocesseddirectory: data/processed/sudoku/
+
+# MODELS
+models:
+  path: models/model.pkl
+
+results:
+  raw_path: results/results_raw.pkl
+  evaluated_path: results/results_evaluated.pkl
+
+visualization:
+  figure_directory: reports/figures/
