@@ -1,7 +1,7 @@
 # DATA 
 datasets:
   - name: mnist
-    url: "https://path.to/mnist/dataset"
+    url: "https://www.kaggle.com/datasets/hojjatk/mnist-dataset"
     datarawdirectory: data/raw/mnist/
     datainterimdirectory: data/interim/mnist/
     dataprocesseddirectory: data/processed/mnist/
