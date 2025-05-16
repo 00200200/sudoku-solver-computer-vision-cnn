@@ -1,16 +1,3 @@
-# DATA 
-datasets:
-  - name: mnist
-    url: "https://www.kaggle.com/datasets/hojjatk/mnist-dataset"
-    datarawdirectory: data/raw/mnist/
-    datainterimdirectory: data/interim/mnist/
-    dataprocesseddirectory: data/processed/mnist/
-
-  - name: sudoku
-    url: "https://www.kaggle.com/datasets/mexwell/sudoku-image-dataset"
-    datarawdirectory: data/raw/sudoku/
-    datainterimdirectory: data/interim/sudoku/
-    dataprocesseddirectory: data/processed/sudoku/
 
 # MODELS
 models:
