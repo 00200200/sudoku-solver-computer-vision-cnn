@@ -1,27 +1,23 @@
 # from src.model import model
+import torch
+
 import src.common.tools as tools
 import src.data.dataio as dataio
 from src.evaluate import evaluate
 
-
-def predict(config):
-    # Load the data to make predictions on
-    filepath = config["dataprocesseddirectory"] + "test.csv"
-    [X, y] = dataio.load(filepath)
-
-    # Load the model
-    modelpath = config["modelpath"]
-    Model = tools.pickle_load(modelpath)
-
-    # Make predictions from the trained model
-    [y_hat, classes] = Model.predict(X)
-
-    # Save results to a convenient data structure
-    Result = evaluate.Results(y, y_hat, classes)
-    resultspath = config["resultsrawpath"]
-    tools.pickle_dump(resultspath, Result)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-if __name__ == "__main__":
-    config = tools.load_config()
-    predict(config)
+def evaluate_model(model, test_loader):
+    model.eval()  # Włącz tryb oceny
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for inputs, labels in test_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            _, predicted = torch.max(outputs, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    print(f"Accuracy: {100 * correct / total}%")
