@@ -1,7 +1,5 @@
 import cv2
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 
 import src.common.tools as tools
 import src.data.dataio as dataio
@@ -105,18 +103,53 @@ def finding_sudoku_mask(image):
 
 
 def extract_sudoku_grid(image, mask):
+    # Find Contours
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+    # Find Contour with the largest area
     largest_contour = max(contours, key=cv2.contourArea)
 
+    # Draw Contour on the image
     cv2.drawContours(image, [largest_contour], -1, (0, 0, 255), 2)
 
-    peri = cv2.arcLength(largest_contour, True)
-    approx = cv2.approxPolyDP(largest_contour, 0.02 * peri, True)
+    peri = cv2.arcLength(largest_contour, True)  # Get the perimeter
+    approx = cv2.approxPolyDP(
+        largest_contour, 0.02 * peri, True
+    )  # Przyblizanie konturu 2 % obwodu ( True Zamkniety kontur)
 
-    corners = approx.reshape(4, 2)
+    # If we still don't have 4 points
+    if len(approx) != 4:
+        rect = cv2.minAreaRect(
+            largest_contour
+        )  # MinAreaRect zwraca prostokat, ktory ma najmniejsza powierzchnie i zawiera kontur
+        box = cv2.boxPoints(
+            rect
+        )  # BoxPoints zwraca 4 punkty, ktore sa wierzcholkami prostokata
+        approx = np.array(box)
+
+    corners = approx.reshape(4, 2)  # Reshape to 4x2 array
 
     return corners
+
+
+def process_sudoku_image(image):
+    try:
+        mask = finding_sudoku_mask(image)
+        contour = extract_sudoku_grid(image, mask)
+        warped = perspective_transform(image, contour)
+        cells = crop_each_cell(warped)
+
+        processed_cells = []
+        for row in cells:
+            for cell in row:
+                gray = cv2.cvtColor(cell, cv2.COLOR_BGR2GRAY)
+                resized = cv2.resize(gray, (28, 28))
+                normalized = resized / 255.0
+                processed_cells.append(normalized)
+
+        return processed_cells
+    except Exception as e:
+        print(f"Error processing Sudoku image: {e}")
+        return None
 
 
 def preprocess(config):
@@ -124,15 +157,15 @@ def preprocess(config):
     rawdatapath = config["datarawdirectory"] + config["dataname"] + ".csv"
     [X, y] = dataio.load(rawdatapath)
 
-    # Save intermediate products
-    savepath = config["datainterimdirectory"]
-    # dataio.save(X_train, y_train, savepath + "train.csv")
-    # dataio.save(X_test, y_test, savepath + "test.csv")
+    # # Save intermediate products
+    # savepath = config["datainterimdirectory"]
+    # # dataio.save(X_train, y_train, savepath + "train.csv")
+    # # dataio.save(X_test, y_test, savepath + "test.csv")
 
-    # Save final products
-    savepath = config["dataprocesseddirectory"]
-    # dataio.save(X_train_scaled, y_train, savepath + "train.csv")
-    # dataio.save(X_test_scaled, y_test, savepath + "test.csv")
+    # # Save final products
+    # savepath = config["dataprocesseddirectory"]
+    # # dataio.save(X_train_scaled, y_train, savepath + "train.csv")
+    # # dataio.save(X_test_scaled, y_test, savepath + "test.csv")
 
 
 if __name__ == "__main__":

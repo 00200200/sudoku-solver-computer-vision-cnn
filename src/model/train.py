@@ -11,25 +11,33 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def train_model(model, train_loader, criterion, optimizer, num_epochs=10):
     model.train()  # Włącz tryb treningu
     for epoch in range(num_epochs):
+        model.train()  # ustawienie modelu w tryb treningowy
         running_loss = 0.0
+        correct = 0
+        total = 0
         for inputs, labels in train_loader:
+            # Przenosimy dane na GPU
             inputs, labels = inputs.to(device), labels.to(device)
 
-            # Zerowanie gradientów
             optimizer.zero_grad()
 
-            # Przekazywanie danych przez model
+            # Forward pass
             outputs = model(inputs)
-
-            # Obliczanie straty
             loss = criterion(outputs, labels)
 
-            # Obliczanie gradientów
+            # Backward pass i optymalizacja
             loss.backward()
-
-            # Aktualizacja wag
             optimizer.step()
 
             running_loss += loss.item()
 
-        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader)}")
+            # Obliczanie dokładności
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+        epoch_loss = running_loss / len(train_loader)
+        epoch_acc = 100 * correct / total
+        print(
+            f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.2f}%"
+        )
