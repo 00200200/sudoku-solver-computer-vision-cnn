@@ -1,5 +1,6 @@
 # Import libraries and classes required for this example:
 import os
+import struct
 
 import cv2
 import numpy as np
@@ -17,11 +18,8 @@ def load_dat(path):
     try:
         with open(path) as f:
             next(f)
-            next(f)  # Skip metadata
-            grid = []
-            for line in f:
-                grid.extend([int(x) for x in line.strip().split()])
-        return grid
+            next(f)
+            return [int(x) for line in f for x in line.strip().split()]
     except:
         return None
 
@@ -34,44 +32,65 @@ def process_cells(image):
         return None
 
 
-def load_sudoku_data(data_dir):
-    """Load and preprocess all sudoku images and labels from a directory"""
-    images = []
-    labels = []
-
-    for file in os.listdir(data_dir):
-        if not file.endswith(".jpg"):
-            continue
-
-        # Get paths
-        image_path = os.path.join(data_dir, file)
-        label_path = image_path.replace(".jpg", ".dat")
-        if not os.path.exists(label_path):
-            continue
-
-        # Load data
-        grid_labels = load_dat(label_path)
-        image = load_image(image_path)
-        if not grid_labels or image is None:
-            continue
-
-        # Process image
-        cells = process_cells(image)
-        if not cells:
-            continue
-
-        # Add to dataset
-        images.extend(cells)
-        labels.extend(grid_labels)
-
-    # Convert to arrays
-    return (np.array(images, dtype=np.float32), np.array(labels, dtype=np.int64))
+# MNIST loading functions
+def read_idx(filename):
+    with open(filename, "rb") as f:
+        magic, size = struct.unpack(">II", f.read(8))
+        if magic == 2051:  # Images
+            rows, cols = struct.unpack(">II", f.read(8))
+            return (
+                np.fromfile(f, dtype=np.uint8)
+                .reshape(size, rows * cols)
+                .astype(np.float32)
+                / 255.0
+            )
+        elif magic == 2049:  # Labels
+            return np.fromfile(f, dtype=np.uint8)
 
 
-class CustomImageDataset(Dataset):
-    def __init__(self, images, labels):
-        self.images = images
-        self.labels = labels
+def load_mnist(data_dir):
+    return (
+        read_idx(os.path.join(data_dir, "train-images.idx3-ubyte")),
+        read_idx(os.path.join(data_dir, "train-labels.idx1-ubyte")),
+        read_idx(os.path.join(data_dir, "t10k-images.idx3-ubyte")),
+        read_idx(os.path.join(data_dir, "t10k-labels.idx1-ubyte")),
+    )
+
+
+class SudokuDataset(Dataset):
+    def __init__(self, data_dir):
+        self.images = []
+        self.labels = []
+
+        for file in os.listdir(data_dir):
+            if not file.endswith(".jpg"):
+                continue
+
+            # Load and process image/labels
+            image_path = os.path.join(data_dir, file)
+            label_path = image_path.replace(".jpg", ".dat")
+
+            if not os.path.exists(label_path):
+                continue
+
+            labels = load_dat(label_path)
+            image = load_image(image_path)
+
+            if not labels or image is None:
+                continue
+
+            # Process cells
+            cells = process_sudoku_image(image)
+            if not cells:
+                continue
+
+            # Add to dataset
+            self.images.extend(cells)
+            self.labels.extend(labels)
+
+        # Convert to arrays
+        self.images = np.array(self.images, dtype=np.float32)
+        self.labels = np.array(self.labels, dtype=np.int64)
 
     def __len__(self):
         return len(self.images)
@@ -80,23 +99,52 @@ class CustomImageDataset(Dataset):
         return torch.from_numpy(self.images[idx]).unsqueeze(0), self.labels[idx]
 
 
-def get_data_loaders(data_dir, batch_size=32, train_split=0.8):
-    # Load all data
-    images, labels = load_sudoku_data(data_dir)
-    print(f"Dataset size: {len(images)} samples")
+class MNISTDataset(Dataset):
+    def __init__(self, images, labels):
+        self.images = images
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, idx):
+        return torch.from_numpy(self.images[idx]).reshape(1, 28, 28), int(
+            self.labels[idx]
+        )
+
+
+def get_sudoku_loaders(data_dir, batch_size=32, train_split=0.8):
+    dataset = SudokuDataset(data_dir)
+    print(f"Sudoku dataset size: {len(dataset)} samples")
 
     # Split dataset
-    train_size = int(train_split * len(images))
-    indices = torch.randperm(len(images))
-    train_indices = indices[:train_size]
-    val_indices = indices[train_size:]
+    train_size = int(train_split * len(dataset))
+    val_size = len(dataset) - train_size
 
-    # Create datasets
-    train_dataset = CustomImageDataset(images[train_indices], labels[train_indices])
-    val_dataset = CustomImageDataset(images[val_indices], labels[val_indices])
+    train_dataset, val_dataset = torch.utils.data.random_split(
+        dataset, [train_size, val_size]
+    )
 
-    # Create loaders
     return (
         DataLoader(train_dataset, batch_size=batch_size, shuffle=True),
         DataLoader(val_dataset, batch_size=batch_size, shuffle=False),
+    )
+
+
+def get_mnist_loaders(data_dir, batch_size=32):
+    # Load MNIST data
+    train_images, train_labels, test_images, test_labels = load_mnist(data_dir)
+    print(
+        f"MNIST dataset size: {len(train_images)} training, {len(test_images)} test samples"
+    )
+
+    return (
+        DataLoader(
+            MNISTDataset(train_images, train_labels),
+            batch_size=batch_size,
+            shuffle=True,
+        ),
+        DataLoader(
+            MNISTDataset(test_images, test_labels), batch_size=batch_size, shuffle=False
+        ),
     )

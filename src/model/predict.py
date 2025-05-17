@@ -9,7 +9,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def evaluate_model(model, test_loader):
-    model.eval()  # ustawienie modelu w tryb ewaluacyjny
+    model.eval()
     correct = 0
     total = 0
     with torch.no_grad():

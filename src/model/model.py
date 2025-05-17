@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class ConvNet(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes=10):
         super().__init__()
         self.conv1 = nn.Conv2d(
             1, 32, kernel_size=3, padding=1
@@ -15,7 +15,7 @@ class ConvNet(nn.Module):
         self.fc1 = nn.Linear(
             64 * 7 * 7, 64
         )  # 64 kanały, po poolingach obraz ma wymiary 7x7
-        self.fc2 = nn.Linear(64, 10)  # 10 klas
+        self.fc2 = nn.Linear(64, num_classes)  # 10 klas
 
     def forward(self, x):
         x = self.pool(torch.relu(self.conv1(x)))  # Warstwa konwolucyjna + pooling
