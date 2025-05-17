@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from sklearn.ensemble import RandomForestClassifier
 
 
 class ConvNet(nn.Module):
