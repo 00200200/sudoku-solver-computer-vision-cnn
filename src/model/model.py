@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torchvision import models
 
 
 class ConvNet(nn.Module):
@@ -24,3 +25,14 @@ class ConvNet(nn.Module):
         x = torch.relu(self.fc1(x))  # Warstwa w pełni połączona
         x = self.fc2(x)  # Wyjście
         return x
+
+
+class ResNet152(nn.Module):
+    def __init__(self, num_classes=10):
+        super().__init__()
+        self.resnet = models.resnet152()
+        self.resnet.conv1 = nn.Conv2d(in_channels=1, kernel_size=7, out_channels=64)
+        self.fc = nn.Linear(self.resnet.fc.in_features, num_classes)
+
+    def forward(self, x):
+        return self.resnet(x)

@@ -152,22 +152,6 @@ def process_sudoku_image(image):
         return None
 
 
-def preprocess(config):
-    # Load the data
-    rawdatapath = config["datarawdirectory"] + config["dataname"] + ".csv"
-    [X, y] = dataio.load(rawdatapath)
-
-    # # Save intermediate products
-    # savepath = config["datainterimdirectory"]
-    # # dataio.save(X_train, y_train, savepath + "train.csv")
-    # # dataio.save(X_test, y_test, savepath + "test.csv")
-
-    # # Save final products
-    # savepath = config["dataprocesseddirectory"]
-    # # dataio.save(X_train_scaled, y_train, savepath + "train.csv")
-    # # dataio.save(X_test_scaled, y_test, savepath + "test.csv")
-
-
 if __name__ == "__main__":
     config = tools.load_config()
     base = config["base"]

@@ -30,3 +30,4 @@ repos:
           - matplotlib
           - opencv-python
           - torch
+          - torchvision

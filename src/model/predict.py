@@ -24,3 +24,4 @@ def evaluate_model(model, test_loader):
 
     test_acc = 100 * correct / total
     print(f"Test Accuracy: {test_acc:.2f}%")
+    return test_acc
