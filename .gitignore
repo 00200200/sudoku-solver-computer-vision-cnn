@@ -87,5 +87,6 @@ target/
 *.swo
 
 # Mypy cache
+models/
 .mypy_cache/
 
