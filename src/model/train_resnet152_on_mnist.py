@@ -21,7 +21,7 @@ if __name__ == "__main__":
         train_loader,
         nn.CrossEntropyLoss(),
         optim.Adam(model.parameters(), lr=0.001),
-        num_epochs=5,
+        num_epochs=25,
     )
 
     # Save model
@@ -34,5 +34,5 @@ if __name__ == "__main__":
 
     # Test on Sudoku data
     print("\nEvaluating on Sudoku test set:")
-    _, sudoku_test_loader = get_sudoku_loaders("data/raw/sudoku/mixed 2/mixed 2")
+    _, sudoku_test_loader = get_sudoku_loaders("data/raw/sudoku/v1_test/v1_test")
     evaluate_model(model, sudoku_test_loader)

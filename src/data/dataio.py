@@ -49,11 +49,36 @@ def read_idx(filename):
 
 
 def load_mnist(data_dir):
+    # Sprawdź, czy pliki są bezpośrednio w katalogu, czy w podkatalogach
+    train_images_path = os.path.join(data_dir, "train-images.idx3-ubyte")
+    if not os.path.exists(train_images_path):
+        train_images_path = os.path.join(
+            data_dir, "train-images-idx3-ubyte", "train-images.idx3-ubyte"
+        )
+
+    train_labels_path = os.path.join(data_dir, "train-labels.idx1-ubyte")
+    if not os.path.exists(train_labels_path):
+        train_labels_path = os.path.join(
+            data_dir, "train-labels-idx1-ubyte", "train-labels.idx1-ubyte"
+        )
+
+    test_images_path = os.path.join(data_dir, "t10k-images.idx3-ubyte")
+    if not os.path.exists(test_images_path):
+        test_images_path = os.path.join(
+            data_dir, "t10k-images-idx3-ubyte", "t10k-images.idx3-ubyte"
+        )
+
+    test_labels_path = os.path.join(data_dir, "t10k-labels.idx1-ubyte")
+    if not os.path.exists(test_labels_path):
+        test_labels_path = os.path.join(
+            data_dir, "t10k-labels-idx1-ubyte", "t10k-labels.idx1-ubyte"
+        )
+
     return (
-        read_idx(os.path.join(data_dir, "train-images.idx3-ubyte")),
-        read_idx(os.path.join(data_dir, "train-labels.idx1-ubyte")),
-        read_idx(os.path.join(data_dir, "t10k-images.idx3-ubyte")),
-        read_idx(os.path.join(data_dir, "t10k-labels.idx1-ubyte")),
+        read_idx(train_images_path),
+        read_idx(train_labels_path),
+        read_idx(test_images_path),
+        read_idx(test_labels_path),
     )
 
 
@@ -61,6 +86,8 @@ class SudokuDataset(Dataset):
     def __init__(self, data_dir):
         self.images = []
         self.labels = []
+
+        print(f"Loading Sudoku dataset from: {data_dir}")
 
         for file in os.listdir(data_dir):
             if not file.endswith(".jpg"):
@@ -113,22 +140,27 @@ class MNISTDataset(Dataset):
         )
 
 
-def get_sudoku_loaders(data_dir, batch_size=32, train_split=0.8):
-    dataset = SudokuDataset(data_dir)
-    print(f"Sudoku dataset size: {len(dataset)} samples")
+def get_sudoku_loaders(train_dir, test_dir=None, batch_size=32, train_split=0.8):
+    train_dataset = SudokuDataset(train_dir)
+    print(f"Sudoku training dataset size: {len(train_dataset)} samples")
 
-    # Split dataset
-    train_size = int(train_split * len(dataset))
-    val_size = len(dataset) - train_size
+    if test_dir:
+        test_dataset = SudokuDataset(test_dir)
+        print(f"Sudoku test dataset size: {len(test_dataset)} samples")
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    else:
+        # Split dataset
+        train_size = int(train_split * len(train_dataset))
+        val_size = len(train_dataset) - train_size
 
-    train_dataset, val_dataset = torch.utils.data.random_split(
-        dataset, [train_size, val_size]
-    )
+        train_dataset, val_dataset = torch.utils.data.random_split(
+            train_dataset, [train_size, val_size]
+        )
+        test_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-    return (
-        DataLoader(train_dataset, batch_size=batch_size, shuffle=True),
-        DataLoader(val_dataset, batch_size=batch_size, shuffle=False),
-    )
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+    return train_loader, test_loader
 
 
 def get_mnist_loaders(data_dir, batch_size=32):

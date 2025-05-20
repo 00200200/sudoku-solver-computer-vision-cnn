@@ -22,6 +22,18 @@ def evaluate_and_save_results(model, model_name, test_loader, results_list):
     return results_list
 
 
+def load_and_evaluate_model(
+    model_class, model_path, model_name, test_loader, results_list
+):
+    try:
+        model = model_class().to(device)
+        model.load_state_dict(torch.load(model_path, weights_only=False))
+        return evaluate_and_save_results(model, model_name, test_loader, results_list)
+    except Exception as e:
+        print(f"Skipping {model_name} - {e}")
+        return results_list
+
+
 if __name__ == "__main__":
     # Setup
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -34,38 +46,44 @@ if __name__ == "__main__":
     _, test_loader = get_sudoku_loaders("data/raw/sudoku/v1_test/v1_test")
 
     # Test MNIST-only model
-    model = ConvNet().to(device)
-    model.load_state_dict(torch.load("models/model_mnist_only.pkl"))
-    results_list = evaluate_and_save_results(
-        model, "MNIST-only", test_loader, results_list
+    results_list = load_and_evaluate_model(
+        ConvNet, "models/model_mnist_only.pkl", "MNIST-only", test_loader, results_list
     )
 
     # Test MNIST-Sudoku model
-    model = ConvNet().to(device)
-    model.load_state_dict(torch.load("models/model_mnist_sudoku.pkl"))
-    results_list = evaluate_and_save_results(
-        model, "MNIST-Sudoku", test_loader, results_list
+    results_list = load_and_evaluate_model(
+        ConvNet,
+        "models/model_mnist_sudoku.pkl",
+        "MNIST-Sudoku",
+        test_loader,
+        results_list,
     )
 
     # Test Sudoku-only model
-    model = ConvNet().to(device)
-    model.load_state_dict(torch.load("models/model_sudoku_only.pkl"))
-    results_list = evaluate_and_save_results(
-        model, "Sudoku-only", test_loader, results_list
+    results_list = load_and_evaluate_model(
+        ConvNet,
+        "models/model_sudoku_only.pkl",
+        "Sudoku-only",
+        test_loader,
+        results_list,
     )
 
-    # Test ResNet Sudoku model
-    model = ResNet152().to(device)
-    model.load_state_dict(torch.load("models/resnest_sudoku_only.pkl"))
-    results_list = evaluate_and_save_results(
-        model, "ResNet-Sudoku", test_loader, results_list
+    # Test ResNet Sudoku model if available
+    results_list = load_and_evaluate_model(
+        ResNet152,
+        "models/resnest_sudoku_only.pkl",
+        "ResNet-Sudoku",
+        test_loader,
+        results_list,
     )
 
-    # Test ResNet Finetuned model
-    model = ResNet152().to(device)
-    model.load_state_dict(torch.load("models/resnest_sudoku_finetuned.pkl"))
-    results_list = evaluate_and_save_results(
-        model, "ResNet-Sudoku-Finetuned", test_loader, results_list
+    # Test ResNet Finetuned model if available
+    results_list = load_and_evaluate_model(
+        ResNet152,
+        "models/resnest_sudoku_finetuned.pkl",
+        "ResNet-Sudoku-Finetuned",
+        test_loader,
+        results_list,
     )
 
     # Convert results to DataFrame and save as CSV

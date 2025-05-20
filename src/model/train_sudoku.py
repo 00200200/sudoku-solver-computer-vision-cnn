@@ -13,7 +13,9 @@ if __name__ == "__main__":
     model = ConvNet().to(device)  # Przenosimy model na GPU
 
     # Load and train
-    train_loader, val_loader = get_sudoku_loaders("data/raw/sudoku/mixed 2/mixed 2")
+    sudoku_train_dir = "data/raw/sudoku/v1_training/v1_training"
+    sudoku_test_dir = "data/raw/sudoku/v1_test/v1_test"
+    train_loader, test_loader = get_sudoku_loaders(sudoku_train_dir, sudoku_test_dir)
     train_model(
         model,
         train_loader,
@@ -23,4 +25,4 @@ if __name__ == "__main__":
     )
 
     torch.save(model.state_dict(), "models/model_sudoku_only.pkl")
-    evaluate_model(model, val_loader)
+    evaluate_model(model, test_loader)

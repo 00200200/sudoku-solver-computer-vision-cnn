@@ -17,8 +17,9 @@ if __name__ == "__main__":
     print("Loaded pre-trained ResNet model: models/resnest_sudoku_only.pkl")
 
     # Load Sudoku data
-    sudoku_dir = "data/raw/sudoku/mixed 2/mixed 2"
-    train_loader, test_loader = get_sudoku_loaders(sudoku_dir)
+    sudoku_train_dir = "data/raw/sudoku/v1_training/v1_training"
+    sudoku_test_dir = "data/raw/sudoku/v1_test/v1_test"
+    train_loader, test_loader = get_sudoku_loaders(sudoku_train_dir, sudoku_test_dir)
 
     # Test before fine-tuning
     print("\nPerformance on Sudoku before fine-tuning:")
