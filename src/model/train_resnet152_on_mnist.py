@@ -8,6 +8,7 @@ from src.data.dataio import get_mnist_loaders, get_sudoku_loaders
 from src.model.model import ResNet152
 from src.model.predict import evaluate_model
 from src.model.train import train_model
+from src.preprocess.build_features import process_sudoku_image
 
 if __name__ == "__main__":
     # Setup
@@ -34,5 +35,7 @@ if __name__ == "__main__":
 
     # Test on Sudoku data
     print("\nEvaluating on Sudoku test set:")
-    _, sudoku_test_loader = get_sudoku_loaders("data/raw/sudoku/v1_test/v1_test")
+    _, sudoku_test_loader = get_sudoku_loaders(
+        "data/raw/sudoku/v1_test/v1_test", cell_processor=process_sudoku_image
+    )
     evaluate_model(model, sudoku_test_loader)

@@ -7,6 +7,7 @@ import torch
 from src.data.dataio import get_sudoku_loaders
 from src.model.model import ConvNet, ResNet152
 from src.model.predict import evaluate_model
+from src.preprocess.build_features import process_sudoku_image
 
 
 def evaluate_and_save_results(model, model_name, test_loader, results_list):
@@ -43,7 +44,9 @@ if __name__ == "__main__":
     os.makedirs("results", exist_ok=True)
 
     # Load test data
-    _, test_loader = get_sudoku_loaders("data/raw/sudoku/v1_test/v1_test")
+    _, test_loader = get_sudoku_loaders(
+        "data/raw/sudoku/v1_test/v1_test", cell_processor=process_sudoku_image
+    )
 
     # Test MNIST-only model
     results_list = load_and_evaluate_model(

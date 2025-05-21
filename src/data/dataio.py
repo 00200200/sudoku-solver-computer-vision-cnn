@@ -7,8 +7,6 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from src.preprocess.build_features import process_sudoku_image
-
 
 def load_image(path):
     return cv2.imread(path)
@@ -20,14 +18,6 @@ def load_dat(path):
             next(f)
             next(f)
             return [int(x) for line in f for x in line.strip().split()]
-    except:
-        return None
-
-
-def process_cells(image):
-    try:
-        cells = process_sudoku_image(image)
-        return cells
     except:
         return None
 
@@ -83,9 +73,10 @@ def load_mnist(data_dir):
 
 
 class SudokuDataset(Dataset):
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, cell_processor):
         self.images = []
         self.labels = []
+        self.cell_processor = cell_processor
 
         print(f"Loading Sudoku dataset from: {data_dir}")
 
@@ -107,9 +98,14 @@ class SudokuDataset(Dataset):
                 continue
 
             # Process cells
-            cells = process_sudoku_image(image)
-            if not cells:
+            processor_output = self.cell_processor(image)
+            if not processor_output or not processor_output[0]:
+                print(
+                    f"Warning: No cells extracted for {image_path} using the provided processor, skipping."
+                )
                 continue
+
+            cells = processor_output[0]
 
             # Add to dataset
             self.images.extend(cells)
@@ -140,12 +136,14 @@ class MNISTDataset(Dataset):
         )
 
 
-def get_sudoku_loaders(train_dir, test_dir=None, batch_size=32, train_split=0.8):
-    train_dataset = SudokuDataset(train_dir)
+def get_sudoku_loaders(
+    train_dir, cell_processor, test_dir=None, batch_size=32, train_split=0.8
+):
+    train_dataset = SudokuDataset(train_dir, cell_processor=cell_processor)
     print(f"Sudoku training dataset size: {len(train_dataset)} samples")
 
     if test_dir:
-        test_dataset = SudokuDataset(test_dir)
+        test_dataset = SudokuDataset(test_dir, cell_processor=cell_processor)
         print(f"Sudoku test dataset size: {len(test_dataset)} samples")
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     else:

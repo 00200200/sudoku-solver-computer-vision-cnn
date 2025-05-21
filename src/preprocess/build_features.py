@@ -71,21 +71,20 @@ def perspective_transform(image, corners):
     return cv2.warpPerspective(image, matrix, (width, height))
 
 
-def crop_each_cell(image):
-    # Znajdź kontury wszystkich komórek
-    height, width = image.shape[:2]
-    cell_height = height // 9
-    cell_width = width // 9
+def extract_cells_with_coords_from_warped_image(image):
+    h, w = image.shape[:2]
+    cell_h, cell_w = h // 9, w // 9
+
     cells = []
     for i in range(9):
-        cells_row = []
         for j in range(9):
-            x = j * cell_width
-            y = i * cell_height
-            cell = image[y : y + cell_height, x : x + cell_width]
-            cells_row.append(cell)
-        cells.append(cells_row)
-
+            x, y = j * cell_w, i * cell_h
+            cells.append(
+                {
+                    "image": image[y : y + cell_h, x : x + cell_w],
+                    "coords": (x, y, cell_w, cell_h),
+                }
+            )
     return cells
 
 
@@ -133,23 +132,26 @@ def extract_sudoku_grid(image, mask):
 
 def process_sudoku_image(image):
     try:
-        mask = finding_sudoku_mask(image)
-        contour = extract_sudoku_grid(image, mask)
-        warped = perspective_transform(image, contour)
-        cells = crop_each_cell(warped)
+        # Get sudoku box
+        mask = finding_sudoku_mask(image.copy())
+        corners = extract_sudoku_grid(image.copy(), mask)
+        warped = perspective_transform(image, corners)
 
+        # Process cells
+        cells_data = extract_cells_with_coords_from_warped_image(warped)
         processed_cells = []
-        for row in cells:
-            for cell in row:
-                gray = cv2.cvtColor(cell, cv2.COLOR_BGR2GRAY)
-                resized = cv2.resize(gray, (28, 28))
-                normalized = resized / 255.0
-                processed_cells.append(normalized)
+        coords = []
 
-        return processed_cells
+        for cell in cells_data:
+            gray = cv2.cvtColor(cell["image"], cv2.COLOR_BGR2GRAY)
+            processed = cv2.resize(gray, (28, 28)) / 255.0
+            processed_cells.append(processed)
+            coords.append(cell["coords"])
+
+        return processed_cells, coords, warped
     except Exception as e:
-        print(f"Error processing Sudoku image: {e}")
-        return None
+        print(f"Error: {e}")
+        return None, None, None
 
 
 if __name__ == "__main__":
@@ -173,8 +175,13 @@ if __name__ == "__main__":
     warped = perspective_transform(image, contour)
     cv2.imshow("Wyciete sudoku", warped)
 
-    cells = crop_each_cell(warped)
-    print(len(cells))
+    # Example of using the main processing function
+    processed_cells, coords_on_warped, warped_display = process_sudoku_image(image)
+    if processed_cells:
+        print(f"Successfully processed {len(processed_cells)} cells.")
+        cv2.imshow("Warped Sudoku for Display", warped_display)
+        # You can now use coords_on_warped to draw on warped_display
+
     print("Naciśnij dowolny klawisz, aby zakończyć...")
     cv2.waitKey(0)
     cv2.destroyAllWindows()

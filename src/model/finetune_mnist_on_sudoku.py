@@ -6,6 +6,7 @@ from src.data.dataio import get_sudoku_loaders
 from src.model.model import ConvNet
 from src.model.predict import evaluate_model
 from src.model.train import train_model
+from src.preprocess.build_features import process_sudoku_image
 
 if __name__ == "__main__":
     # Setup device
@@ -19,7 +20,9 @@ if __name__ == "__main__":
     # Load Sudoku data
     sudoku_dir_train = "data/raw/sudoku/v1_training/v1_training"
     sudoku_dir_test = "data/raw/sudoku/v1_test/v1_test"
-    train_loader, test_loader = get_sudoku_loaders(sudoku_dir_train, sudoku_dir_test)
+    train_loader, test_loader = get_sudoku_loaders(
+        sudoku_dir_train, cell_processor=process_sudoku_image, test_dir=sudoku_dir_test
+    )
 
     # Test before fine-tuning
     print("\nPerformance on Sudoku before fine-tuning:")
