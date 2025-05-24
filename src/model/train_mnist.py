@@ -22,7 +22,7 @@ if __name__ == "__main__":
         train_loader,
         nn.CrossEntropyLoss(),
         optim.Adam(model.parameters(), lr=0.001),
-        num_epochs=50,
+        num_epochs=15,
     )
 
     # Save model

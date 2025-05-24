@@ -32,7 +32,10 @@ class ResNet152(nn.Module):
         super().__init__()
         self.resnet = models.resnet152()
         self.resnet.conv1 = nn.Conv2d(in_channels=1, kernel_size=7, out_channels=64)
-        self.fc = nn.Linear(self.resnet.fc.in_features, num_classes)
+        for param in self.resnet.parameters():
+            param.requires_grad = False
+
+        self.resnet.fc = nn.Linear(self.resnet.fc.in_features, num_classes)
 
     def forward(self, x):
         return self.resnet(x)

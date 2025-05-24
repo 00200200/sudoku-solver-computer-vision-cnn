@@ -17,11 +17,15 @@ if __name__ == "__main__":
     model.load_state_dict(torch.load("models/resnest_sudoku_only.pkl"))
     print("Loaded pre-trained ResNet model: models/resnest_sudoku_only.pkl")
 
-    # Load Sudoku data
-    sudoku_train_dir = "data/raw/sudoku/v1_training/v1_training"
+    sudoku_train_dirs = [
+        "data/raw/sudoku/v1_training/v1_training",
+        "data/raw/sudoku/v2_train/v2_train",
+    ]
     sudoku_test_dir = "data/raw/sudoku/v1_test/v1_test"
     train_loader, test_loader = get_sudoku_loaders(
-        sudoku_train_dir, cell_processor=process_sudoku_image, test_dir=sudoku_test_dir
+        sudoku_train_dirs,
+        cell_processor=process_sudoku_image,
+        test_dir=sudoku_test_dir,
     )
 
     # Test before fine-tuning
@@ -37,5 +41,5 @@ if __name__ == "__main__":
     evaluate_model(model, test_loader)
 
     # Save fine-tuned model
-    torch.save(model.state_dict(), "models/resnest_sudoku_finetuned.pkl")
+    torch.save(model.state_dict(), "models/resnest_new_sudoku_finetuned.pkl")
     print("Fine-tuned model saved as: models/resnest_sudoku_finetuned.pkl")

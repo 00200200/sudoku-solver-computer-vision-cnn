@@ -143,8 +143,17 @@ def process_sudoku_image(image):
         coords = []
 
         for cell in cells_data:
+            # Convert to grayscale
             gray = cv2.cvtColor(cell["image"], cv2.COLOR_BGR2GRAY)
-            processed = cv2.resize(gray, (28, 28)) / 255.0
+
+            # Apply Otsu's thresholding
+            _, binary = cv2.threshold(
+                gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
+            )
+
+            # Resize to 28x28 and normalize
+            processed = cv2.resize(binary, (28, 28)) / 255.0
+
             processed_cells.append(processed)
             coords.append(cell["coords"])
 

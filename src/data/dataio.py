@@ -1,4 +1,3 @@
-# Import libraries and classes required for this example:
 import os
 import struct
 
@@ -18,7 +17,11 @@ def load_dat(path):
             next(f)
             next(f)
             return [int(x) for line in f for x in line.strip().split()]
-    except:
+    except FileNotFoundError:
+        print(f"Warning: Label file not found at {path}, skipping image.")
+        return None
+    except Exception as e:
+        print(f"Warning: Error loading label file {path}: {e}, skipping image.")
         return None
 
 
@@ -39,7 +42,6 @@ def read_idx(filename):
 
 
 def load_mnist(data_dir):
-    # Sprawdź, czy pliki są bezpośrednio w katalogu, czy w podkatalogach
     train_images_path = os.path.join(data_dir, "train-images.idx3-ubyte")
     if not os.path.exists(train_images_path):
         train_images_path = os.path.join(
@@ -73,43 +75,50 @@ def load_mnist(data_dir):
 
 
 class SudokuDataset(Dataset):
-    def __init__(self, data_dir, cell_processor):
+    def __init__(self, data_dirs, cell_processor):
         self.images = []
         self.labels = []
         self.cell_processor = cell_processor
 
-        print(f"Loading Sudoku dataset from: {data_dir}")
+        if isinstance(data_dirs, str):
+            data_dirs = [data_dirs]
 
-        for file in os.listdir(data_dir):
-            if not file.endswith(".jpg"):
+        for data_dir in data_dirs:
+            print(f"Loading Sudoku dataset from: {data_dir}")
+            if not os.path.isdir(data_dir):
+                print(f"Warning: Directory not found {data_dir}, skipping.")
                 continue
 
-            # Load and process image/labels
-            image_path = os.path.join(data_dir, file)
-            label_path = image_path.replace(".jpg", ".dat")
+            for file in os.listdir(data_dir):
+                if not file.endswith(".jpg"):
+                    continue
 
-            if not os.path.exists(label_path):
-                continue
+                # Load and process image/labels
+                image_path = os.path.join(data_dir, file)
+                label_path = image_path.replace(".jpg", ".dat")
 
-            labels = load_dat(label_path)
-            image = load_image(image_path)
+                if not os.path.exists(label_path):
+                    continue
 
-            if not labels or image is None:
-                continue
+                labels = load_dat(label_path)
+                image = load_image(image_path)
 
-            # Process cells
-            processor_output = self.cell_processor(image)
-            if not processor_output or not processor_output[0]:
-                print(
-                    f"Warning: No cells extracted for {image_path} using the provided processor, skipping."
-                )
-                continue
+                if not labels or image is None:
+                    continue
 
-            cells = processor_output[0]
+                # Process cells
+                processor_output = self.cell_processor(image)
+                if not processor_output or not processor_output[0]:
+                    print(
+                        f"Warning: No cells extracted for {image_path} using the provided processor, skipping."
+                    )
+                    continue
 
-            # Add to dataset
-            self.images.extend(cells)
-            self.labels.extend(labels)
+                cells = processor_output[0]
+
+                # Add to dataset
+                self.images.extend(cells)
+                self.labels.extend(labels)
 
         # Convert to arrays
         self.images = np.array(self.images, dtype=np.float32)
@@ -137,10 +146,16 @@ class MNISTDataset(Dataset):
 
 
 def get_sudoku_loaders(
-    train_dir, cell_processor, test_dir=None, batch_size=32, train_split=0.8
+    train_dirs, cell_processor, test_dir=None, batch_size=32, train_split=0.8
 ):
-    train_dataset = SudokuDataset(train_dir, cell_processor=cell_processor)
+    train_dataset = SudokuDataset(train_dirs, cell_processor=cell_processor)
     print(f"Sudoku training dataset size: {len(train_dataset)} samples")
+
+    if not train_dataset or len(train_dataset) == 0:
+        print(
+            "Warning: Sudoku training dataset is empty. Check data paths and processing."
+        )
+        return None, None
 
     if test_dir:
         test_dataset = SudokuDataset(test_dir, cell_processor=cell_processor)
