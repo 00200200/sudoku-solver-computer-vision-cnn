@@ -30,11 +30,21 @@ class ConvNet(nn.Module):
 class ResNet152(nn.Module):
     def __init__(self, num_classes=10):
         super().__init__()
-        self.resnet = models.resnet152()
-        self.resnet.conv1 = nn.Conv2d(in_channels=1, kernel_size=7, out_channels=64)
+        self.resnet = models.resnet152(pretrained=True)
+        # self.resnet.conv1 = nn.Conv2d(
+        #     in_channels=3,
+        #     kernel_size=7,
+        #     stride=2,
+        #     padding=3,
+        #     bias=False,
+        #     out_channels=64,
+        # )
+        # 3 razy powielic obrazek zeby był 3 kanałowy W MNIST .
+        # Pure Black and White ( Same zera i jedynki ) albo upewnic sie czy maja taki sam rozkład
+        # Znormalizowac do tych samych wartości .
+
         for param in self.resnet.parameters():
             param.requires_grad = False
-
         self.resnet.fc = nn.Linear(self.resnet.fc.in_features, num_classes)
 
     def forward(self, x):

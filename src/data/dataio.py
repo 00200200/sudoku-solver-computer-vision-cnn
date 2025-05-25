@@ -128,7 +128,10 @@ class SudokuDataset(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        return torch.from_numpy(self.images[idx]).unsqueeze(0), self.labels[idx]
+        image = torch.from_numpy(self.images[idx]).unsqueeze(0)
+        if image.size(0) == 1:
+            image = image.repeat(3, 1, 1)
+        return image, self.labels[idx]
 
 
 class MNISTDataset(Dataset):
@@ -140,9 +143,10 @@ class MNISTDataset(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        return torch.from_numpy(self.images[idx]).reshape(1, 28, 28), int(
-            self.labels[idx]
-        )
+        image = torch.from_numpy(self.images[idx]).reshape(1, 28, 28)
+        if image.size(0) == 1:
+            image = image.repeat(3, 1, 1)
+        return image, int(self.labels[idx])
 
 
 def get_sudoku_loaders(
