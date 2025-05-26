@@ -14,8 +14,8 @@ if __name__ == "__main__":
 
     # Load pre-trained ResNet model
     model = ResNet152().to(device)
-    model.load_state_dict(torch.load("models/resnest_sudoku_only.pkl"))
-    print("Loaded pre-trained ResNet model: models/resnest_sudoku_only.pkl")
+    model.load_state_dict(torch.load("models/resnest_mnist_only.pkl"))
+    print("Loaded pre-trained ResNet model: models/resnest_mnist_only.pkl")
 
     sudoku_train_dirs = [
         "data/raw/sudoku/v1_training/v1_training",
