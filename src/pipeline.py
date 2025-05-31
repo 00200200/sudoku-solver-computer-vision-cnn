@@ -59,6 +59,7 @@ def predict_grid(model, cell_images):
 def main_pipeline(image_path, model_path):
     # Load and process image
     image = cv2.imread(image_path)
+    image = image.repeat(3, 1, 1)
     if image is None:
         raise ValueError(f"Could not load image: {image_path}")
 
@@ -88,5 +89,6 @@ if __name__ == "__main__":
     image_path = os.path.join(
         workspace_root, "data/raw/sudoku/v1_test/v1_test/image8.jpg"
     )
+
     model_path = os.path.join(workspace_root, "models/resnest_sudoku_finetuned.pkl")
     main_pipeline(image_path, model_path)
