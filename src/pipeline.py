@@ -1,10 +1,11 @@
 import os
+from datetime import datetime
 
 import cv2
 import torch
 
-from src.model.model import ResNet152
-from src.model.solver import Suduko as solve_sudoku_algorithm
+from src.model.model import ConvNet, ResNet152
+from src.model.solver import Sudoku as solve_sudoku_algorithm
 from src.preprocess.build_features import process_sudoku_image
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -50,16 +51,33 @@ def predict_grid(model, cell_images):
                     .unsqueeze(0)
                     .to(device)
                 )
+                tensor_image = tensor_image.repeat(1, 3, 1, 1)
+
                 output = model(tensor_image)
                 grid[i][j] = torch.max(output.data, 1)[1].item()
 
     return grid
 
 
-def main_pipeline(image_path, model_path):
+def save_results(
+    original_image, warped_sudoku, solved_image, output_dir="results/pipeline_outputs"
+):
+    """Save pipeline results with timestamp."""
+    os.makedirs(output_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Save images
+    cv2.imwrite(f"{output_dir}/{timestamp}_original.jpg", original_image)
+    cv2.imwrite(f"{output_dir}/{timestamp}_extracted_sudoku.jpg", warped_sudoku)
+    cv2.imwrite(f"{output_dir}/{timestamp}_solved.jpg", solved_image)
+
+    print(f"Results saved to {output_dir}/ with timestamp {timestamp}")
+    return timestamp
+
+
+def main_pipeline(image_path, model_path, save_images=True, show_images=True):
     # Load and process image
     image = cv2.imread(image_path)
-    image = image.repeat(3, 1, 1)
     if image is None:
         raise ValueError(f"Could not load image: {image_path}")
 
@@ -68,20 +86,35 @@ def main_pipeline(image_path, model_path):
         raise ValueError("Failed to process Sudoku image")
 
     # Load model and predict
-    model = ResNet152().to(device)
-    model.load_state_dict(torch.load(model_path))
+    model = ConvNet().to(device)
+    model.load_state_dict(torch.load(model_path, map_location=device))
 
     # Predict and solve
     grid = predict_grid(model, cells)
     grid_solution = [row[:] for row in grid]
 
     if solve_sudoku_algorithm(grid_solution, 0, 0):
-        cv2.imshow("Original", image)
-        cv2.imshow("Solution", overlay_digits(warped, grid_solution, coords))
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        solved_image = overlay_digits(warped, grid_solution, coords)
+
+        # Save results if requested
+        if save_images:
+            timestamp = save_results(image, warped, solved_image)
+            print(
+                f"Pipeline completed successfully. Results saved with timestamp: {timestamp}"
+            )
+
+        # Show images if requested
+        if show_images:
+            cv2.imshow("Original", image)
+            cv2.imshow("Extracted Sudoku", warped)
+            cv2.imshow("Solution", solved_image)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
         return grid_solution
-    return None
+    else:
+        print("Failed to solve the Sudoku puzzle")
+        return None
 
 
 if __name__ == "__main__":
@@ -90,5 +123,5 @@ if __name__ == "__main__":
         workspace_root, "data/raw/sudoku/v1_test/v1_test/image8.jpg"
     )
 
-    model_path = os.path.join(workspace_root, "models/resnest_sudoku_finetuned.pkl")
+    model_path = os.path.join(workspace_root, "models/model_mnist_sudoku.pkl")
     main_pipeline(image_path, model_path)

@@ -1,6 +1,36 @@
+import torch
 from sklearn.metrics import accuracy_score, confusion_matrix
 
 from src.common import tools
+
+
+def evaluate_model(model, test_loader):
+    """
+    Evaluate model performance on test data.
+
+    Args:
+        model: Trained model
+        test_loader: DataLoader with test data
+
+    Returns:
+        float: Test accuracy percentage
+    """
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.eval()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for inputs, labels in test_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    test_acc = 100 * correct / total
+    print(f"Test Accuracy: {test_acc:.2f}%")
+    return test_acc
 
 
 class Results:

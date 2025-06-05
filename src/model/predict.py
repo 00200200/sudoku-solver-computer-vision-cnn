@@ -1,4 +1,5 @@
 # from src.model import model
+import numpy as np
 import torch
 
 import src.common.tools as tools
@@ -8,20 +9,29 @@ from src.evaluate import evaluate
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def evaluate_model(model, test_loader):
+def predict_model(model, data_loader):
     model.eval()
-    correct = 0
-    total = 0
+    predictions = []
+    true_labels = []
     with torch.no_grad():
-        for inputs, labels in test_loader:
-            # Przenosimy dane na GPU
+        for inputs, labels in data_loader:
             inputs, labels = inputs.to(device), labels.to(device)
-
             outputs = model(inputs)
             _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
 
-    test_acc = 100 * correct / total
-    print(f"Test Accuracy: {test_acc:.2f}%")
-    return test_acc
+            predictions.extend(predicted.cpu().numpy())
+            true_labels.extend(labels.cpu().numpy())
+
+    return np.array(predictions), np.array(true_labels)
+
+
+def predict_single_image(model, image_tensor):
+    model.eval()
+    with torch.no_grad():
+        image_tensor = image_tensor.to(device)
+        if len(image_tensor.shape) == 3:
+            image_tensor = image_tensor.unsqueeze(0)  # Add batch dimension
+
+        output = model(image_tensor)
+        _, predicted = torch.max(output.data, 1)
+        return predicted.item()

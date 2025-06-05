@@ -1,14 +1,12 @@
 import torch
 import torch.nn as nn
-from torchvision import models
+from torchvision import models, transforms
 
 
 class ConvNet(nn.Module):
     def __init__(self, num_classes=10):
         super().__init__()
-        self.conv1 = nn.Conv2d(
-            1, 32, kernel_size=3, padding=1
-        )  # padding=1, więc rozmiar pozostaje 28x28
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(2, 2)  # pooling z rozmiarem 2x2
         self.conv2 = nn.Conv2d(
             32, 64, kernel_size=3, padding=1
@@ -30,10 +28,28 @@ class ConvNet(nn.Module):
 class ResNet152(nn.Module):
     def __init__(self, num_classes=10):
         super().__init__()
-        self.resnet = models.resnet152(pretrained=True)
-        for param in self.resnet.parameters():
+        self.resnet = models.resnet152(weights=models.ResNet152_Weights.IMAGENET1K_V1)
+        self.resnet.conv1 = nn.Conv2d(
+            3, 64, kernel_size=3, stride=1, padding=1, bias=False
+        )
+
+        for param in list(self.resnet.parameters())[:-5]:
             param.requires_grad = False
-        self.resnet.fc = nn.Linear(self.resnet.fc.in_features, num_classes)
+
+        num_features = self.resnet.fc.in_features
+        self.resnet.fc = nn.Sequential(
+            nn.Linear(num_features, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(256, num_classes),
+        )
+
+        # Fix normalization for 3 channels
+        self.normalize = transforms.Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        )
 
     def forward(self, x):
+        x = self.normalize(x)
         return self.resnet(x)

@@ -4,10 +4,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from src.core.train import train_model
 from src.data.dataio import get_mnist_loaders, get_sudoku_loaders
+from src.evaluate.evaluate import evaluate_model
 from src.model.model import ResNet152
-from src.model.predict import evaluate_model
-from src.model.train import train_model
 from src.preprocess.build_features import process_sudoku_image
 
 if __name__ == "__main__":

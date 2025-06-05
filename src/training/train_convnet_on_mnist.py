@@ -4,19 +4,19 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from src.core.train import train_model
 from src.data.dataio import get_mnist_loaders, get_sudoku_loaders
-from src.model.model import ResNet152
-from src.model.predict import evaluate_model
-from src.model.train import train_model
+from src.evaluate.evaluate import evaluate_model
+from src.model.model import ConvNet
 from src.preprocess.build_features import process_sudoku_image
 
 if __name__ == "__main__":
     # Setup
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = ResNet152().to(device)  # Move model to GPU if available
+    model = ConvNet().to(device)  # Move model to GPU if available
 
     # Load MNIST data and train
-    train_loader, val_loader = get_mnist_loaders("data/raw/MNIST")
+    train_loader, test_loader = get_mnist_loaders("data/raw/MNIST")
     model = train_model(
         model,
         train_loader,
@@ -27,11 +27,11 @@ if __name__ == "__main__":
 
     # Save model
     os.makedirs("models", exist_ok=True)
-    torch.save(model.state_dict(), "models/resnest_mnist_only.pkl")
+    torch.save(model.state_dict(), "models/model_mnist_only.pkl")
 
     # Evaluate on MNIST
     print("\nEvaluating on MNIST test set:")
-    evaluate_model(model, val_loader)
+    evaluate_model(model, test_loader)
 
     # Test on Sudoku data
     print("\nEvaluating on Sudoku test set:")
