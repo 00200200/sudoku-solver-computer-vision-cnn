@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     print("\nFine-tuning on Sudoku data...")
     optimizer = optim.Adam(model.parameters(), lr=0.001)
-    train_model(model, train_loader, nn.CrossEntropyLoss(), optimizer, num_epochs=50)
+    train_model(model, train_loader, nn.CrossEntropyLoss(), optimizer, num_epochs=40)
 
     # Test after fine-tuning
     print("\nPerformance on Sudoku after fine-tuning:")

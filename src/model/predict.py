@@ -30,7 +30,7 @@ def predict_single_image(model, image_tensor):
     with torch.no_grad():
         image_tensor = image_tensor.to(device)
         if len(image_tensor.shape) == 3:
-            image_tensor = image_tensor.unsqueeze(0)  # Add batch dimension
+            image_tensor = image_tensor.unsqueeze(0)
 
         output = model(image_tensor)
         _, predicted = torch.max(output.data, 1)

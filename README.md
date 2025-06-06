@@ -181,6 +181,20 @@ pre-commit run --all-files
 
 ## 🔄 Pipeline Details
 
+Below is an example of the full pipeline in action:
+
+| Original Image                                             | Extracted Sudoku                                                   | Solved Sudoku                                            |
+| ---------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------- |
+| ![](results/pipeline_outputs/20250605_113638_original.jpg) | ![](results/pipeline_outputs/20250605_113638_extracted_sudoku.jpg) | ![](results/pipeline_outputs/20250605_113638_solved.jpg) |
+
+**Steps shown above:**
+
+1. 📸 **Original Image** – The raw image containing a Sudoku puzzle.
+2. ✂️ **Extracted Grid** – The detected and warped Sudoku grid, ready for digit recognition.
+3. ✅ **Solved Puzzle** – The final image with recognized and solved digits overlaid.
+
+📝 All output images are saved automatically to the `results/pipeline_outputs/` directory with a timestamp using the `save_results()` function in `pipeline.py`.
+
 ### Image Processing
 
 1. **Sudoku Detection**: Find and extract Sudoku grid using contour detection
