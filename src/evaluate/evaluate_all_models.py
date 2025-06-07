@@ -45,9 +45,11 @@ if __name__ == "__main__":
     # Create results directory if it doesn't exist
     os.makedirs("results", exist_ok=True)
 
-    # Load test data
+    # Load test data - evaluate with ConvNet format (28x28)
     _, test_loader = get_sudoku_loaders(
-        "data/raw/sudoku/v1_test/v1_test", cell_processor=process_sudoku_image
+        "data/raw/sudoku/v1_test/v1_test",
+        cell_processor=process_sudoku_image,
+        for_resnet=False,
     )
 
     print("Starting model evaluation on Sudoku test set...")

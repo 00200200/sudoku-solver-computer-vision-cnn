@@ -29,10 +29,6 @@ class ResNet152(nn.Module):
     def __init__(self, num_classes=10):
         super().__init__()
         self.resnet = models.resnet152(weights=models.ResNet152_Weights.IMAGENET1K_V1)
-        self.resnet.conv1 = nn.Conv2d(
-            3, 64, kernel_size=3, stride=1, padding=1, bias=False
-        )
-
         for param in list(self.resnet.parameters())[:-5]:
             param.requires_grad = False
 
@@ -45,11 +41,5 @@ class ResNet152(nn.Module):
             nn.Linear(256, num_classes),
         )
 
-        # Fix normalization for 3 channels
-        self.normalize = transforms.Normalize(
-            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-        )
-
     def forward(self, x):
-        x = self.normalize(x)
         return self.resnet(x)

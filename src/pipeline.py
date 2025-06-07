@@ -120,8 +120,8 @@ def main_pipeline(image_path, model_path, save_images=True, show_images=True):
 if __name__ == "__main__":
     workspace_root = "/Users/michal/Library/Code/sudoku/"
     image_path = os.path.join(
-        workspace_root, "data/raw/sudoku/v1_test/v1_test/image18.jpg"
+        workspace_root, "data/raw/sudoku/v1_test/v1_test/image8.jpg"
     )
 
-    model_path = os.path.join(workspace_root, "models/model_mnist_sudoku.pkl")
+    model_path = os.path.join(workspace_root, "models/model_sudoku_only.pkl")
     main_pipeline(image_path, model_path)

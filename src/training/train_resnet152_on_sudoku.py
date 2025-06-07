@@ -24,6 +24,7 @@ if __name__ == "__main__":
         sudoku_train_dirs,
         cell_processor=process_sudoku_image,
         test_dir=sudoku_test_dir,
+        for_resnet=True,
     )
 
     if train_loader is None or test_loader is None:

@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     # Load Sudoku data
     mnist_dir = "data/raw/MNIST"
-    train_loader, test_loader = get_mnist_loaders(mnist_dir)
+    train_loader, test_loader = get_mnist_loaders(mnist_dir, for_resnet=False)
 
     # Test before fine-tuning
     print("\nPerformance on Sudoku before fine-tuning:")
@@ -34,7 +34,10 @@ if __name__ == "__main__":
     sudoku_dir_train = "data/raw/sudoku/v1_training/v1_training"
     sudoku_dir_test = "data/raw/sudoku/v1_test/v1_test"
     train_loader, test_loader = get_sudoku_loaders(
-        sudoku_dir_train, cell_processor=process_sudoku_image, test_dir=sudoku_dir_test
+        sudoku_dir_train,
+        cell_processor=process_sudoku_image,
+        test_dir=sudoku_dir_test,
+        for_resnet=False,
     )
     evaluate_model(model, test_loader)
 

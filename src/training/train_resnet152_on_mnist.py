@@ -15,8 +15,9 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ResNet152().to(device)  # Move model to GPU if available
 
-    # Load MNIST data and train
-    train_loader, val_loader = get_mnist_loaders("data/raw/MNIST")
+    # Load MNIST data and train (ResNet152 = for_resnet=True)
+    train_loader, val_loader = get_mnist_loaders("data/raw/MNIST", for_resnet=True)
+
     model = train_model(
         model,
         train_loader,
@@ -33,9 +34,11 @@ if __name__ == "__main__":
     print("\nEvaluating on MNIST test set:")
     evaluate_model(model, val_loader)
 
-    # Test on Sudoku data
+    # Test on Sudoku data (ResNet152 = for_resnet=True)
     print("\nEvaluating on Sudoku test set:")
     _, sudoku_test_loader = get_sudoku_loaders(
-        "data/raw/sudoku/v1_test/v1_test", cell_processor=process_sudoku_image
+        "data/raw/sudoku/v1_test/v1_test",
+        cell_processor=process_sudoku_image,
+        for_resnet=True,
     )
     evaluate_model(model, sudoku_test_loader)

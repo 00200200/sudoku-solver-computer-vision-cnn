@@ -75,10 +75,15 @@ def load_mnist(data_dir):
 
 
 class SudokuDataset(Dataset):
-    def __init__(self, data_dirs, cell_processor):
+    def __init__(self, data_dirs, cell_processor, for_resnet=False):
         self.images = []
         self.labels = []
         self.cell_processor = cell_processor
+        self.for_resnet = for_resnet
+
+        if for_resnet:
+            self.mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+            self.std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
 
         if isinstance(data_dirs, str):
             data_dirs = [data_dirs]
@@ -129,31 +134,61 @@ class SudokuDataset(Dataset):
 
     def __getitem__(self, idx):
         image = torch.from_numpy(self.images[idx]).unsqueeze(0)
-        if image.size(0) == 1:
-            image = image.repeat(3, 1, 1)
+        image = image.repeat(3, 1, 1)  # RGB
+
+        if self.for_resnet:
+            # ResNet152 potrzebuje 224x224 + normalizację
+            if image.shape[1] == 28 and image.shape[2] == 28:
+                image = image.repeat_interleave(8, dim=1).repeat_interleave(8, dim=2)
+            image = (image - self.mean) / self.std
+        # ConvNet działa z 28x28 bez dodatkowej normalizacji
+
         return image, self.labels[idx]
 
 
 class MNISTDataset(Dataset):
-    def __init__(self, images, labels):
+    """Uniwersalny dataset dla MNIST - automatycznie dostosowuje się do modelu"""
+
+    def __init__(self, images, labels, for_resnet=False):
         self.images = images
         self.labels = labels
+        self.for_resnet = for_resnet
+
+        if for_resnet:
+            # ImageNet normalizacja dla pretrained modeli
+            self.mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+            self.std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
 
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, idx):
         image = torch.from_numpy(self.images[idx]).reshape(1, 28, 28)
-        if image.size(0) == 1:
-            image = image.repeat(3, 1, 1)
+        image = image.repeat(3, 1, 1)  # RGB
+
+        if self.for_resnet:
+            # ResNet152 potrzebuje 224x224 + normalizację
+            image = image.repeat_interleave(8, dim=1).repeat_interleave(8, dim=2)
+            image = (image - self.mean) / self.std
+        # ConvNet działa z 28x28 bez dodatkowej normalizacji
+
         return image, int(self.labels[idx])
 
 
 def get_sudoku_loaders(
-    train_dirs, cell_processor, test_dir=None, batch_size=32, train_split=0.8
+    train_dirs,
+    cell_processor,
+    test_dir=None,
+    batch_size=32,
+    train_split=0.8,
+    for_resnet=False,
 ):
-    train_dataset = SudokuDataset(train_dirs, cell_processor=cell_processor)
-    print(f"Sudoku training dataset size: {len(train_dataset)} samples")
+    """Uniwersalny Sudoku loader - automatycznie dostosowuje się do modelu"""
+    train_dataset = SudokuDataset(
+        train_dirs, cell_processor=cell_processor, for_resnet=for_resnet
+    )
+    model_type = "ResNet152" if for_resnet else "ConvNet"
+    print(f"Sudoku dataset ({model_type}): {len(train_dataset)} training samples")
 
     if not train_dataset or len(train_dataset) == 0:
         print(
@@ -162,38 +197,40 @@ def get_sudoku_loaders(
         return None, None
 
     if test_dir:
-        test_dataset = SudokuDataset(test_dir, cell_processor=cell_processor)
-        print(f"Sudoku test dataset size: {len(test_dataset)} samples")
+        test_dataset = SudokuDataset(
+            test_dir, cell_processor=cell_processor, for_resnet=for_resnet
+        )
+        print(f"Sudoku test dataset ({model_type}): {len(test_dataset)} samples")
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     else:
         # Split dataset
         train_size = int(train_split * len(train_dataset))
         val_size = len(train_dataset) - train_size
-
         train_dataset, val_dataset = torch.utils.data.random_split(
             train_dataset, [train_size, val_size]
         )
         test_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-
     return train_loader, test_loader
 
 
-def get_mnist_loaders(data_dir, batch_size=32):
-    # Load MNIST data
+def get_mnist_loaders(data_dir, batch_size=32, for_resnet=False):
     train_images, train_labels, test_images, test_labels = load_mnist(data_dir)
+    model_type = "ResNet152" if for_resnet else "ConvNet"
     print(
-        f"MNIST dataset size: {len(train_images)} training, {len(test_images)} test samples"
+        f"MNIST dataset ({model_type}): {len(train_images)} training, {len(test_images)} test samples"
     )
 
     return (
         DataLoader(
-            MNISTDataset(train_images, train_labels),
+            MNISTDataset(train_images, train_labels, for_resnet=for_resnet),
             batch_size=batch_size,
             shuffle=True,
         ),
         DataLoader(
-            MNISTDataset(test_images, test_labels), batch_size=batch_size, shuffle=False
+            MNISTDataset(test_images, test_labels, for_resnet=for_resnet),
+            batch_size=batch_size,
+            shuffle=False,
         ),
     )

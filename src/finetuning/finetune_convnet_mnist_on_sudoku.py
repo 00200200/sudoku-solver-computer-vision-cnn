@@ -17,11 +17,16 @@ if __name__ == "__main__":
     model.load_state_dict(torch.load("models/model_mnist_only.pkl"))
     print("Loaded pre-trained MNIST model: models/model_mnist_only.pkl")
 
-    # Load Sudoku data
-    sudoku_dir_train = "data/raw/sudoku/v1_training/v1_training"
-    sudoku_dir_test = "data/raw/sudoku/v1_test/v1_test"
+    sudoku_train_dirs = [
+        "data/raw/sudoku/v1_training/v1_training",
+        "data/raw/sudoku/v2_train/v2_train",
+    ]
+    sudoku_test_dir = "data/raw/sudoku/v1_test/v1_test"
     train_loader, test_loader = get_sudoku_loaders(
-        sudoku_dir_train, cell_processor=process_sudoku_image, test_dir=sudoku_dir_test
+        sudoku_train_dirs,
+        cell_processor=process_sudoku_image,
+        test_dir=sudoku_test_dir,
+        for_resnet=False,
     )
 
     # Test before fine-tuning
@@ -30,7 +35,7 @@ if __name__ == "__main__":
 
     print("\nFine-tuning on Sudoku data...")
     optimizer = optim.Adam(model.parameters(), lr=0.001)
-    train_model(model, train_loader, nn.CrossEntropyLoss(), optimizer, num_epochs=40)
+    train_model(model, train_loader, nn.CrossEntropyLoss(), optimizer, num_epochs=35)
 
     # Test after fine-tuning
     print("\nPerformance on Sudoku after fine-tuning:")
