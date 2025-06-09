@@ -2,6 +2,15 @@
 
 This project implements an end-to-end pipeline for solving Sudoku puzzles from images using computer vision and deep learning techniques.
 
+## 📸 Pipeline in Action
+
+|                           Original Image                           |                               Extracted Grid                                |                         Solved Sudoku                          |
+| :----------------------------------------------------------------: | :-------------------------------------------------------------------------: | :------------------------------------------------------------: |
+| ![Original](results/pipeline_outputs/20250605_113638_original.jpg) | ![Extracted](results/pipeline_outputs/20250605_113638_extracted_sudoku.jpg) | ![Solved](results/pipeline_outputs/20250605_113638_solved.jpg) |
+|                          Raw input image                           |                           Detected & warped grid                            |                    Final solution overlaid                     |
+
+**🏆 Best Model:** ConvNet achieves **95.68% accuracy** on digit recognition with only 50K parameters.
+
 ## 📁 Project Structure
 
 ```
