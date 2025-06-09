@@ -130,7 +130,7 @@ def extract_sudoku_grid(image, mask):
     return corners
 
 
-def process_sudoku_image(image):
+def process_sudoku_image(image, invert_for_mnist_compatibility=True):
     try:
         # Get sudoku box
         mask = finding_sudoku_mask(image.copy())
@@ -146,12 +146,19 @@ def process_sudoku_image(image):
             # Convert to grayscale
             gray = cv2.cvtColor(cell["image"], cv2.COLOR_BGR2GRAY)
 
-            # Apply Otsu's thresholding
-            _, binary = cv2.threshold(
-                gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
-            )
+            # Apply Otsu's thresholding - FIX: Use THRESH_BINARY (not INV) to match MNIST
+            if invert_for_mnist_compatibility:
+                # MNIST format: black background, white digits
+                _, binary = cv2.threshold(
+                    gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+                )
+            else:
+                # Original format: white background, black digits
+                _, binary = cv2.threshold(
+                    gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
+                )
 
-            # Resize to 28x28 and normalize
+            # Resize to 28x28 and normalize to [0,1] range
             processed = cv2.resize(binary, (28, 28)) / 255.0
 
             processed_cells.append(processed)
@@ -185,7 +192,9 @@ if __name__ == "__main__":
     cv2.imshow("Wyciete sudoku", warped)
 
     # Example of using the main processing function
-    processed_cells, coords_on_warped, warped_display = process_sudoku_image(image)
+    processed_cells, coords_on_warped, warped_display = process_sudoku_image(
+        image, invert_for_mnist_compatibility=True
+    )
     if processed_cells:
         print(f"Successfully processed {len(processed_cells)} cells.")
         cv2.imshow("Warped Sudoku for Display", warped_display)

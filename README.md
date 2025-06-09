@@ -6,205 +6,144 @@ This project implements an end-to-end pipeline for solving Sudoku puzzles from i
 
 ```
 src/
-├── model/                  # Neural network models and prediction
-│   ├── model.py           # ConvNet and ResNet152 architectures
-│   ├── predict.py         # Prediction functions
-│   ├── solver.py          # Sudoku solving algorithm
-│   └── evaluate_all_models.py # Model comparison script
-├── training/              # Training scripts
-│   ├── train_sudoku.py    # Train on Sudoku data
-│   ├── train_mnist.py     # Train on MNIST data
-│   └── train_resnet152_*.py # ResNet training variants
-├── finetuning/           # Fine-tuning scripts
-│   └── finetune_*.py     # Various fine-tuning approaches
-├── data/                 # Data loading and preprocessing
-│   └── dataio.py         # Data loaders for MNIST and Sudoku
-├── preprocess/           # Image preprocessing
-│   └── build_features.py # Sudoku extraction and cell processing
+├── model/                 # Neural network models
+│   ├── model.py          # ConvNet & ResNet152 architectures
+│   ├── predict.py        # Prediction functions
+│   └── solver.py         # Sudoku solving algorithm
+├── training/             # Training scripts
+│   ├── train_convnet_on_sudoku.py  # Best model training
+│   ├── train_convnet_on_mnist.py   # MNIST baseline
+│   └── train_resnet152_*.py        # ResNet variants
+├── finetuning/           # Transfer learning experiments
 ├── evaluate/             # Model evaluation
-│   └── evaluate.py       # Evaluation metrics and functions
-├── core/                 # Core training utilities
-│   └── train.py          # Main training loop
-├── common/               # Shared utilities
-│   └── tools.py          # Helper functions
+│   └── evaluate_all_models.py     # Comprehensive comparison
+├── data/                 # Data loading
+├── preprocess/           # Image preprocessing
+├── core/                 # Training utilities
 └── pipeline.py           # Main inference pipeline
 ```
 
 ## 🧠 Models
 
-### ConvNet
+### ConvNet (Primary Model)
 
-- Lightweight CNN optimized for 28x28 digit recognition
-- 2 convolutional layers + 2 fully connected layers
-- ~50K parameters
-- Fast training and inference
+Our custom lightweight CNN architecture optimized specifically for Sudoku digit recognition:
 
-### ResNet152
+**Architecture:**
+
+- **Input**: 28x28 RGB images (converted from grayscale)
+- **Conv1**: 32 filters, 3x3 kernel, ReLU activation
+- **MaxPool**: 2x2 pooling
+- **Conv2**: 64 filters, 3x3 kernel, ReLU activation
+- **MaxPool**: 2x2 pooling
+- **FC1**: 64 _ 7 _ 7 → 64 neurons, ReLU activation
+- **FC2**: 64 → 10 classes (digits 0-9)
+
+**Specifications:**
+
+- Parameters: ~50,000 (lightweight and efficient)
+- Training time: ~10-15 minutes on GPU for 50 epochs
+- Inference: Real-time performance
+- Memory usage: Minimal
+
+### ResNet152 (Experimental)
+
+Deep residual network with transfer learning approach:
 
 - Pre-trained on ImageNet, fine-tuned for digit recognition
-- Transfer learning with frozen backbone
-- Modified first layer for small images (stride=1)
-- ~60M parameters
-
-## 🔬 Experiments
-
-Approach follows a systematic methodology:
-
-1. **MNIST Baseline**: Train models on standard MNIST digit recognition
-2. **Sudoku Training**: Train directly on Sudoku cell images
-3. **Transfer Learning**: Fine-tune MNIST-trained models on Sudoku data
-4. **Comparison**: Evaluate all approaches on held-out Sudoku test set
+- ~60M parameters (1200x larger than ConvNet)
+- Significantly higher computational complexity
+- Designed for complex image classification tasks
 
 ## 📊 Results
 
-### Key Findings
+### 🏆 Best Performing Models
 
-## 🚀 Getting Started
+| Rank | Model                                          | Accuracy   | Training Approach       |
+| ---- | ---------------------------------------------- | ---------- | ----------------------- |
+| 🥇   | **50epochs-convnet-sudoku-only**               | **95.68%** | Direct Sudoku training  |
+| 🥈   | 150epochs-convnet-sudoku-very-long-small-batch | 95.52%     | Extended training       |
+| 🥉   | 140epochs-convnet-sudoku-higher-lr-longer      | 95.37%     | Higher learning rate    |
+| 4️⃣   | 100epochs-convnet-sudoku-larger-batch-lower-lr | 94.75%     | Batch size optimization |
 
-### Prerequisites
+### 🔍 Key Findings
 
-- Python 3.9+
-- Poetry (dependency management)
-- CUDA-capable GPU (recommended)
+**✅ What Worked:**
+
+- **ConvNet trained directly on Sudoku data achieved the best results** (95.68% accuracy)
+- **Optimal configuration**: 50 epochs, Adam optimizer (lr=0.001), batch size=32
+- Models trained specifically on Sudoku outperformed all transfer learning approaches
+
+**❌ Transfer Learning Did Not Help:**
+
+- MNIST pre-training surprisingly **hurt performance** rather than helped
+- MNIST-to-Sudoku fine-tuned models peaked at ~94% accuracy (1.5% lower than direct training)
+- MNIST-only models performed poorly on Sudoku (~13-52% accuracy)
+
+**🎯 ResNet Consideration:**
+While ResNet152 models showed potential, they faced several limitations:
+
+- **Computational overhead**: 60M vs 50K parameters (1200x larger)
+- **Training time**: Hours vs minutes
+- **Inference speed**: Slower real-time performance
+- **Model incompatibility**: Several ResNet models failed to load due to architecture mismatches
+
+### 📈 Performance Analysis
+
+**ConvNet Advantages:**
+
+- **Efficiency**: Excellent accuracy-to-complexity ratio
+- **Speed**: Fast training and inference
+- **Simplicity**: Easy to deploy and maintain
+- **Sufficient performance**: 95.68% accuracy meets project requirements
+
+**Conclusion:**
+For this Sudoku recognition task, the lightweight ConvNet provides the **optimal balance** between accuracy and computational efficiency. While more complex architectures like ResNet could potentially achieve higher accuracy, the **95.68% result is satisfactory** for practical Sudoku solving applications, and the added complexity is not justified.
+
+## 🚀 Quick Start
 
 ### Installation
-
-1. Clone the repository:
 
 ```bash
 git clone https://github.com/00200200/sudoku
 cd sudoku
-```
-
-2. Install dependencies with Poetry:
-
-```bash
-poetry install
-```
-
-3. Activate virtual environment:
-
-```bash
-poetry shell
-```
-
-4. Install pre-commit hooks:
-
-```bash
-pre-commit install
+poetry install && poetry shell
 ```
 
 ### Usage
 
-#### Training Models
-
-1. Train ConvNet on Sudoku data:
-
-```bash
-python src/training/train_sudoku.py
-```
-
-2. Train ResNet152 on MNIST:
-
-```bash
-python src/training/train_resnet152_on_mnist.py
-```
-
-3. Fine-tune ResNet152 on Sudoku:
-
-```bash
-python src/finetuning/finetune_resnet_on_sudoku.py
-```
-
-#### Running Inference
-
-Solve a single Sudoku image:
+**Solve Sudoku from image:**
 
 ```bash
 python src/pipeline.py
 ```
 
-The pipeline will:
-
-- Extract Sudoku grid from image
-- Recognize digits using trained model
-- Solve the puzzle algorithmically
-- Save results with timestamp in `results/pipeline_outputs/`
-
-#### Model Evaluation
-
-Compare all trained models:
+**Train best model:**
 
 ```bash
-python src/model/evaluate_all_models.py
+python src/training/train_convnet_on_sudoku.py
 ```
 
-Results saved to `results/model_comparison_TIMESTAMP.csv`
-
-## 📚 Dependencies
-
-### Core Libraries
-
-- **PyTorch**: Deep learning framework
-- **torchvision**: Pre-trained models and transforms
-- **OpenCV**: Computer vision and image processing
-- **NumPy**: Numerical computations
-- **scikit-learn**: Evaluation metrics
-- **pandas**: Data analysis and results storage
-
-### Development Tools
-
-- **Poetry**: Dependency management and packaging
-- **pre-commit**: Code quality hooks
-- **black**: Code formatting
-- **isort**: Import sorting
-- **pylint**: Static code analysis
-
-See `pyproject.toml` for complete dependency list with versions.
-
-## 🛠 Development
-
-### Code Quality
-
-This project uses pre-commit hooks to ensure code quality:
-Run manual checks:
+**Evaluate all models:**
 
 ```bash
-pre-commit run --all-files
+python src/evaluate/evaluate_all_models.py
 ```
 
-### Project Configuration
+## 📚 Tech Stack
 
-- `pyproject.toml`: Poetry configuration and project metadata
-- `.pre-commit-config.yaml`: Code quality tools configuration
-- `poetry.lock`: Dependency lock file
+**Core:** PyTorch, OpenCV, NumPy, scikit-learn, pandas  
+**Development:** Poetry, pre-commit hooks, black, isort  
+**Requirements:** Python 3.9+, CUDA GPU (recommended)
 
-## 🔄 Pipeline Details
+## 🔄 Pipeline
 
-Below is an example of the full pipeline in action:
+**Image → Grid Detection → Cell Recognition → Puzzle Solving → Solution Overlay**
 
-| Original Image                                             | Extracted Sudoku                                                   | Solved Sudoku                                            |
-| ---------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------- |
-| ![](results/pipeline_outputs/20250605_113638_original.jpg) | ![](results/pipeline_outputs/20250605_113638_extracted_sudoku.jpg) | ![](results/pipeline_outputs/20250605_113638_solved.jpg) |
+1. **Sudoku Detection**: Contour detection and perspective correction
+2. **Cell Extraction**: 81 individual 28x28 images
+3. **Digit Recognition**: ConvNet predicts 0-9 for each cell
+4. **Solving**: Backtracking algorithm completes the puzzle
+5. **Output**: Solution overlaid on original image
 
-**Steps shown above:**
-
-1. 📸 **Original Image** – The raw image containing a Sudoku puzzle.
-2. ✂️ **Extracted Grid** – The detected and warped Sudoku grid, ready for digit recognition.
-3. ✅ **Solved Puzzle** – The final image with recognized and solved digits overlaid.
-
-📝 All output images are saved automatically to the `results/pipeline_outputs/` directory with a timestamp using the `save_results()` function in `pipeline.py`.
-
-### Image Processing
-
-1. **Sudoku Detection**: Find and extract Sudoku grid using contour detection
-2. **Perspective Correction**: Apply geometric transformation for top-down view
-3. **Cell Extraction**: Divide grid into 81 individual cells (9x9)
-4. **Preprocessing**: Convert to grayscale, resize to 28x28, normalize
-
-### ConvNet Architecture
-
-- Input: 28x28 grayscale images (converted to 3-channel for ResNet)
-- Output: 10 classes (digits 0-9, where 0 = empty cell)
-- Loss: CrossEntropyLoss
-- Optimizer: Adam with lr=0.001
+**Best Model:** `50epochs-convnet-sudoku-only` - 95.68% accuracy, 50K parameters, <1s inference

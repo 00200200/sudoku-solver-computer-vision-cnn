@@ -9,13 +9,17 @@ from src.model.model import ConvNet
 from src.preprocess.build_features import process_sudoku_image
 
 if __name__ == "__main__":
-    # Setup device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # Load pre-trained MNIST model
     model = ConvNet().to(device)
-    model.load_state_dict(torch.load("models/model_mnist_only.pkl"))
-    print("Loaded pre-trained MNIST model: models/model_mnist_only.pkl")
+    try:
+        model.load_state_dict(torch.load("models/15epochs_convnet_mnist_only.pkl"))
+        print("Loaded pre-trained MNIST model: models/15epochs_convnet_mnist_only.pkl")
+    except FileNotFoundError:
+        print("New model not found, trying old naming...")
+        model.load_state_dict(torch.load("models/model_mnist_only.pkl"))
+        print("Loaded pre-trained MNIST model: models/model_mnist_only.pkl")
+
+    num_epochs = 40
 
     sudoku_train_dirs = [
         "data/raw/sudoku/v1_training/v1_training",
@@ -24,23 +28,25 @@ if __name__ == "__main__":
     sudoku_test_dir = "data/raw/sudoku/v1_test/v1_test"
     train_loader, test_loader = get_sudoku_loaders(
         sudoku_train_dirs,
-        cell_processor=process_sudoku_image,
+        cell_processor=lambda img: process_sudoku_image(
+            img, invert_for_mnist_compatibility=True
+        ),
         test_dir=sudoku_test_dir,
         for_resnet=False,
     )
 
-    # Test before fine-tuning
     print("\nPerformance on Sudoku before fine-tuning:")
     evaluate_model(model, test_loader)
 
-    print("\nFine-tuning on Sudoku data...")
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    train_model(model, train_loader, nn.CrossEntropyLoss(), optimizer, num_epochs=35)
+    print(f"\nFine-tuning on Sudoku data for {num_epochs} epochs...")
+    optimizer = optim.Adam(model.parameters(), lr=0.0005)
+    train_model(
+        model, train_loader, nn.CrossEntropyLoss(), optimizer, num_epochs=num_epochs
+    )
 
-    # Test after fine-tuning
     print("\nPerformance on Sudoku after fine-tuning:")
     evaluate_model(model, test_loader)
 
-    # Save fine-tuned model
-    torch.save(model.state_dict(), "models/model_mnist_sudoku.pkl")
-    print("Fine-tuned model saved as: models/model_mnist_sudoku.pkl")
+    model_name = f"models/{num_epochs}epochs_convnet_mnist_to_sudoku_finetuned.pkl"
+    torch.save(model.state_dict(), model_name)
+    print(f"Fine-tuned model saved as: {model_name}")

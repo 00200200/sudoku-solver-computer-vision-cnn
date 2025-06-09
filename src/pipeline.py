@@ -123,5 +123,5 @@ if __name__ == "__main__":
         workspace_root, "data/raw/sudoku/v1_test/v1_test/image8.jpg"
     )
 
-    model_path = os.path.join(workspace_root, "models/model_sudoku_only.pkl")
+    model_path = os.path.join(workspace_root, "models/50epochs_convnet_sudoku_only.pkl")
     main_pipeline(image_path, model_path)

@@ -11,33 +11,34 @@ from src.model.model import ConvNet
 from src.preprocess.build_features import process_sudoku_image
 
 if __name__ == "__main__":
-    # Setup
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = ConvNet().to(device)  # Move model to GPU if available
+    model = ConvNet().to(device)
 
-    # Load MNIST data and train (ConvNet = for_resnet=False)
+    num_epochs = 8
+
     train_loader, test_loader = get_mnist_loaders("data/raw/MNIST", for_resnet=False)
     model = train_model(
         model,
         train_loader,
         nn.CrossEntropyLoss(),
         optim.Adam(model.parameters(), lr=0.001),
-        num_epochs=10,
+        num_epochs=num_epochs,
     )
 
-    # Save model
     os.makedirs("models", exist_ok=True)
-    torch.save(model.state_dict(), "models/model_mnist_only.pkl")
+    model_name = f"models/{num_epochs}epochs_convnet_mnist_only.pkl"
+    torch.save(model.state_dict(), model_name)
+    print(f"Model saved as: {model_name}")
 
-    # Evaluate on MNIST
     print("\nEvaluating on MNIST test set:")
     evaluate_model(model, test_loader)
 
-    # Test on Sudoku data (ConvNet = for_resnet=False)
     print("\nEvaluating on Sudoku test set:")
     _, sudoku_test_loader = get_sudoku_loaders(
         "data/raw/sudoku/v1_test/v1_test",
-        cell_processor=process_sudoku_image,
+        cell_processor=lambda img: process_sudoku_image(
+            img, invert_for_mnist_compatibility=True
+        ),
         for_resnet=False,
     )
     evaluate_model(model, sudoku_test_loader)
