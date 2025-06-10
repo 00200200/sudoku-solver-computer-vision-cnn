@@ -88,5 +88,6 @@ target/
 
 # Mypy cache
 models/
+!models/50epochs_convnet_sudoku_only.pkl
 .mypy_cache/
 
