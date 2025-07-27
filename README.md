@@ -114,7 +114,7 @@ For this Sudoku recognition task, the lightweight ConvNet provides the **optimal
 ### Installation
 
 ```bash
-git clone https://github.com/00200200/sudoku
+git clone https://github.com/00200200/sudoku-solver-computer-vision-cnn
 cd sudoku
 poetry install && poetry shell
 ```
