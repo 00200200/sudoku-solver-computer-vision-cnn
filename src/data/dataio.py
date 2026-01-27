@@ -8,10 +8,20 @@ from torch.utils.data import DataLoader, Dataset
 
 
 def load_image(path):
+    """Load an image from the specified path."""
     return cv2.imread(path)
 
 
 def load_dat(path):
+    """
+    Load Sudoku labels from a .dat file.
+    
+    Args:
+        path: Path to .dat file containing Sudoku grid labels
+    
+    Returns:
+        List of 81 integers (0-9) representing the grid, or None on error
+    """
     try:
         with open(path) as f:
             next(f)
@@ -25,8 +35,16 @@ def load_dat(path):
         return None
 
 
-# MNIST loading functions
 def read_idx(filename):
+    """
+    Read MNIST IDX format files (images or labels).
+    
+    Args:
+        filename: Path to IDX file
+    
+    Returns:
+        Numpy array of images (normalized to [0,1]) or labels
+    """
     with open(filename, "rb") as f:
         magic, size = struct.unpack(">II", f.read(8))
         if magic == 2051:  # Images
@@ -42,6 +60,15 @@ def read_idx(filename):
 
 
 def load_mnist(data_dir):
+    """
+    Load MNIST dataset from directory.
+    
+    Args:
+        data_dir: Directory containing MNIST IDX files
+    
+    Returns:
+        Tuple of (train_images, train_labels, test_images, test_labels)
+    """
     train_images_path = os.path.join(data_dir, "train-images.idx3-ubyte")
     if not os.path.exists(train_images_path):
         train_images_path = os.path.join(
@@ -75,6 +102,14 @@ def load_mnist(data_dir):
 
 
 class SudokuDataset(Dataset):
+    """
+    Dataset for Sudoku cell images with automatic model adaptation.
+    
+    Args:
+        data_dirs: Directory path(s) containing Sudoku images and labels
+        cell_processor: Function to extract cells from Sudoku images
+        for_resnet: If True, applies ResNet preprocessing (224x224, ImageNet normalization)
+    """
     def __init__(self, data_dirs, cell_processor, for_resnet=False):
         self.images = []
         self.labels = []
@@ -98,7 +133,6 @@ class SudokuDataset(Dataset):
                 if not file.endswith(".jpg"):
                     continue
 
-                # Load and process image/labels
                 image_path = os.path.join(data_dir, file)
                 label_path = image_path.replace(".jpg", ".dat")
 
@@ -111,7 +145,6 @@ class SudokuDataset(Dataset):
                 if not labels or image is None:
                     continue
 
-                # Process cells
                 processor_output = self.cell_processor(image)
                 if not processor_output or not processor_output[0]:
                     print(
@@ -121,11 +154,9 @@ class SudokuDataset(Dataset):
 
                 cells = processor_output[0]
 
-                # Add to dataset
                 self.images.extend(cells)
                 self.labels.extend(labels)
 
-        # Convert to arrays
         self.images = np.array(self.images, dtype=np.float32)
         self.labels = np.array(self.labels, dtype=np.int64)
 
@@ -134,20 +165,19 @@ class SudokuDataset(Dataset):
 
     def __getitem__(self, idx):
         image = torch.from_numpy(self.images[idx]).unsqueeze(0)
-        image = image.repeat(3, 1, 1)  # RGB
+        image = image.repeat(3, 1, 1)
 
         if self.for_resnet:
-            # ResNet152 potrzebuje 224x224 + normalizację
+            # ResNet152: resize to 224x224 and apply ImageNet normalization
             if image.shape[1] == 28 and image.shape[2] == 28:
                 image = image.repeat_interleave(8, dim=1).repeat_interleave(8, dim=2)
             image = (image - self.mean) / self.std
-        # ConvNet działa z 28x28 bez dodatkowej normalizacji
 
         return image, self.labels[idx]
 
 
 class MNISTDataset(Dataset):
-    """Uniwersalny dataset dla MNIST - automatycznie dostosowuje się do modelu"""
+    """Universal MNIST dataset that automatically adapts to the model architecture."""
 
     def __init__(self, images, labels, for_resnet=False):
         self.images = images
@@ -155,7 +185,7 @@ class MNISTDataset(Dataset):
         self.for_resnet = for_resnet
 
         if for_resnet:
-            # ImageNet normalizacja dla pretrained modeli
+            # ImageNet normalization for pretrained models
             self.mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
             self.std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
 
@@ -164,13 +194,12 @@ class MNISTDataset(Dataset):
 
     def __getitem__(self, idx):
         image = torch.from_numpy(self.images[idx]).reshape(1, 28, 28)
-        image = image.repeat(3, 1, 1)  # RGB
+        image = image.repeat(3, 1, 1)
 
         if self.for_resnet:
-            # ResNet152 potrzebuje 224x224 + normalizację
+            # ResNet152: resize to 224x224 and apply ImageNet normalization
             image = image.repeat_interleave(8, dim=1).repeat_interleave(8, dim=2)
             image = (image - self.mean) / self.std
-        # ConvNet działa z 28x28 bez dodatkowej normalizacji
 
         return image, int(self.labels[idx])
 
@@ -183,7 +212,7 @@ def get_sudoku_loaders(
     train_split=0.8,
     for_resnet=False,
 ):
-    """Uniwersalny Sudoku loader - automatycznie dostosowuje się do modelu"""
+    """Universal Sudoku loader that automatically adapts to the model architecture."""
     train_dataset = SudokuDataset(
         train_dirs, cell_processor=cell_processor, for_resnet=for_resnet
     )
@@ -216,6 +245,17 @@ def get_sudoku_loaders(
 
 
 def get_mnist_loaders(data_dir, batch_size=32, for_resnet=False):
+    """
+    Create MNIST data loaders with automatic model adaptation.
+    
+    Args:
+        data_dir: Directory containing MNIST files
+        batch_size: Batch size for data loaders
+        for_resnet: If True, applies ResNet preprocessing
+    
+    Returns:
+        Tuple of (train_loader, test_loader)
+    """
     train_images, train_labels, test_images, test_labels = load_mnist(data_dir)
     model_type = "ResNet152" if for_resnet else "ConvNet"
     print(

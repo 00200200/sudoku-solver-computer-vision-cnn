@@ -9,14 +9,14 @@ from src.model import model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-# Funkcja do trenowania modelu
 def train_model(model, train_loader, criterion, optimizer, num_epochs=10):
-    model.train()  # Włącz tryb treningu
+    """Train the model for specified number of epochs."""
+    model.train()
     print(f"Starting training for {num_epochs} epochs...")
 
     for epoch in range(num_epochs):
         epoch_start_time = time.time()
-        model.train()  # ustawienie modelu w tryb treningowy
+        model.train()
         running_loss = 0.0
         correct = 0
         total = 0
@@ -29,7 +29,6 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=10):
             if (i + 1) % 10 == 0:
                 print(f"  Processing batch {i+1}/{batch_count}", end="\r")
 
-            # Przenosimy dane na GPU
             inputs, labels = inputs.to(device), labels.to(device)
 
             optimizer.zero_grad()
@@ -38,13 +37,13 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=10):
             outputs = model(inputs)
             loss = criterion(outputs, labels)
 
-            # Backward pass i optymalizacja
+            # Backward pass and optimization
             loss.backward()
             optimizer.step()
 
             running_loss += loss.item()
 
-            # Obliczanie dokładności
+            # Calculate accuracy
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()

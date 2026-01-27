@@ -1,4 +1,3 @@
-# from src.model import model
 import numpy as np
 import torch
 
@@ -10,6 +9,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def predict_model(model, data_loader):
+    """
+    Run predictions on an entire dataset.
+    
+    Args:
+        model: Trained model
+        data_loader: DataLoader with data to predict
+    
+    Returns:
+        Tuple of (predictions, true_labels) as numpy arrays
+    """
     model.eval()
     predictions = []
     true_labels = []
@@ -26,6 +35,16 @@ def predict_model(model, data_loader):
 
 
 def predict_single_image(model, image_tensor):
+    """
+    Predict class for a single image.
+    
+    Args:
+        model: Trained model
+        image_tensor: Image tensor (3D or 4D with batch dimension)
+    
+    Returns:
+        Predicted class as integer
+    """
     model.eval()
     with torch.no_grad():
         image_tensor = image_tensor.to(device)

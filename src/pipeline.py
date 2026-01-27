@@ -12,6 +12,18 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def overlay_digits(base_image, grid_digits, cell_coords, color=(0, 0, 0)):
+    """
+    Overlay digit predictions onto the Sudoku grid image.
+    
+    Args:
+        base_image: Base image to draw on
+        grid_digits: 9x9 grid of digit predictions
+        cell_coords: List of (x, y, w, h) coordinates for each cell
+        color: Color tuple for the text (B, G, R format)
+    
+    Returns:
+        Image with overlaid digits
+    """
     output_image = base_image.copy()
     for i in range(9):
         for j in range(9):
@@ -37,6 +49,16 @@ def overlay_digits(base_image, grid_digits, cell_coords, color=(0, 0, 0)):
 
 
 def predict_grid(model, cell_images):
+    """
+    Predict digits for each cell in the Sudoku grid.
+    
+    Args:
+        model: Trained digit recognition model
+        cell_images: List of 81 preprocessed cell images
+    
+    Returns:
+        9x9 grid of predicted digits (0-9)
+    """
     model.eval()
     grid = [[0] * 9 for _ in range(9)]
 
@@ -62,11 +84,21 @@ def predict_grid(model, cell_images):
 def save_results(
     original_image, warped_sudoku, solved_image, output_dir="results/pipeline_outputs"
 ):
-    """Save pipeline results with timestamp."""
+    """
+    Save pipeline results with timestamp.
+    
+    Args:
+        original_image: Original input image
+        warped_sudoku: Extracted and warped Sudoku grid
+        solved_image: Sudoku grid with solution overlay
+        output_dir: Directory to save results
+    
+    Returns:
+        Timestamp string used for filenames
+    """
     os.makedirs(output_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # Save images
     cv2.imwrite(f"{output_dir}/{timestamp}_original.jpg", original_image)
     cv2.imwrite(f"{output_dir}/{timestamp}_extracted_sudoku.jpg", warped_sudoku)
     cv2.imwrite(f"{output_dir}/{timestamp}_solved.jpg", solved_image)
@@ -76,7 +108,18 @@ def save_results(
 
 
 def main_pipeline(image_path, model_path, save_images=True, show_images=True):
-    # Load and process image
+    """
+    Complete pipeline to process a Sudoku image and solve it.
+    
+    Args:
+        image_path: Path to input Sudoku image
+        model_path: Path to trained digit recognition model
+        save_images: Whether to save intermediate and final results
+        show_images: Whether to display images in windows
+    
+    Returns:
+        Solved grid (9x9 list) or None if solving failed
+    """
     image = cv2.imread(image_path)
     if image is None:
         raise ValueError(f"Could not load image: {image_path}")
@@ -85,25 +128,21 @@ def main_pipeline(image_path, model_path, save_images=True, show_images=True):
     if cells is None or coords is None or warped is None:
         raise ValueError("Failed to process Sudoku image")
 
-    # Load model and predict
     model = ConvNet().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device))
 
-    # Predict and solve
     grid = predict_grid(model, cells)
     grid_solution = [row[:] for row in grid]
 
     if solve_sudoku_algorithm(grid_solution, 0, 0):
         solved_image = overlay_digits(warped, grid_solution, coords)
 
-        # Save results if requested
         if save_images:
             timestamp = save_results(image, warped, solved_image)
             print(
                 f"Pipeline completed successfully. Results saved with timestamp: {timestamp}"
             )
 
-        # Show images if requested
         if show_images:
             cv2.imshow("Original", image)
             cv2.imshow("Extracted Sudoku", warped)
