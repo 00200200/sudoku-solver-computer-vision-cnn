@@ -6,16 +6,7 @@ import src.data.dataio as dataio
 
 
 def perspective_transform(image, corners):
-    """
-    Apply perspective transformation to extract a top-down view of the Sudoku grid.
-    
-    Args:
-        image: Input image
-        corners: Four corner points of the Sudoku grid
-    
-    Returns:
-        Warped image with top-down view of the Sudoku grid
-    """
+    """Apply perspective transformation for top-down view."""
     def order_corner_points(corners):
         """Order corners as: top-left, top-right, bottom-right, bottom-left."""
         corners = [(corner[0], corner[1]) for corner in corners]
@@ -59,15 +50,7 @@ def perspective_transform(image, corners):
 
 
 def extract_cells_with_coords_from_warped_image(image):
-    """
-    Extract individual cells from a warped Sudoku grid.
-    
-    Args:
-        image: Warped Sudoku grid image
-    
-    Returns:
-        List of dicts with 'image' and 'coords' for each of 81 cells
-    """
+    """Extract individual cells from warped Sudoku grid."""
     h, w = image.shape[:2]
     cell_h, cell_w = h // 9, w // 9
 
@@ -85,7 +68,7 @@ def extract_cells_with_coords_from_warped_image(image):
 
 
 def finding_sudoku_mask(image):
-    """Create a binary mask to detect the Sudoku grid."""
+    """Create binary mask to detect Sudoku grid."""
     sudoku_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     sudoku_blur = cv2.GaussianBlur(sudoku_gray, (5, 5), 0)
     thresh = cv2.adaptiveThreshold(
@@ -98,7 +81,7 @@ def finding_sudoku_mask(image):
 
 
 def extract_sudoku_grid(image, mask):
-    """Extract corners of the Sudoku grid from the mask."""
+    """Extract corners of Sudoku grid from mask."""
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     largest_contour = max(contours, key=cv2.contourArea)
 
@@ -119,16 +102,7 @@ def extract_sudoku_grid(image, mask):
 
 
 def process_sudoku_image(image, invert_for_mnist_compatibility=True):
-    """
-    Process a Sudoku image: extract grid, warp perspective, and extract cells.
-    
-    Args:
-        image: Input image containing a Sudoku puzzle
-        invert_for_mnist_compatibility: If True, format cells to match MNIST (black bg, white digits)
-    
-    Returns:
-        tuple: (processed_cells, coords, warped) or (None, None, None) on failure
-    """
+    """Process Sudoku image: extract grid, warp, and extract cells."""
     try:
         mask = finding_sudoku_mask(image.copy())
         corners = extract_sudoku_grid(image.copy(), mask)

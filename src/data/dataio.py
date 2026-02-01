@@ -13,15 +13,7 @@ def load_image(path):
 
 
 def load_dat(path):
-    """
-    Load Sudoku labels from a .dat file.
-    
-    Args:
-        path: Path to .dat file containing Sudoku grid labels
-    
-    Returns:
-        List of 81 integers (0-9) representing the grid, or None on error
-    """
+    """Load Sudoku labels from .dat file."""
     try:
         with open(path) as f:
             next(f)
@@ -36,15 +28,7 @@ def load_dat(path):
 
 
 def read_idx(filename):
-    """
-    Read MNIST IDX format files (images or labels).
-    
-    Args:
-        filename: Path to IDX file
-    
-    Returns:
-        Numpy array of images (normalized to [0,1]) or labels
-    """
+    """Read MNIST IDX format files."""
     with open(filename, "rb") as f:
         magic, size = struct.unpack(">II", f.read(8))
         if magic == 2051:  # Images
@@ -60,15 +44,7 @@ def read_idx(filename):
 
 
 def load_mnist(data_dir):
-    """
-    Load MNIST dataset from directory.
-    
-    Args:
-        data_dir: Directory containing MNIST IDX files
-    
-    Returns:
-        Tuple of (train_images, train_labels, test_images, test_labels)
-    """
+    """Load MNIST dataset from directory."""
     train_images_path = os.path.join(data_dir, "train-images.idx3-ubyte")
     if not os.path.exists(train_images_path):
         train_images_path = os.path.join(
@@ -102,14 +78,7 @@ def load_mnist(data_dir):
 
 
 class SudokuDataset(Dataset):
-    """
-    Dataset for Sudoku cell images with automatic model adaptation.
-    
-    Args:
-        data_dirs: Directory path(s) containing Sudoku images and labels
-        cell_processor: Function to extract cells from Sudoku images
-        for_resnet: If True, applies ResNet preprocessing (224x224, ImageNet normalization)
-    """
+    """Sudoku dataset with automatic model adaptation."""
     def __init__(self, data_dirs, cell_processor, for_resnet=False):
         self.images = []
         self.labels = []
@@ -177,7 +146,7 @@ class SudokuDataset(Dataset):
 
 
 class MNISTDataset(Dataset):
-    """Universal MNIST dataset that automatically adapts to the model architecture."""
+    """MNIST dataset with automatic model adaptation."""
 
     def __init__(self, images, labels, for_resnet=False):
         self.images = images
@@ -212,7 +181,7 @@ def get_sudoku_loaders(
     train_split=0.8,
     for_resnet=False,
 ):
-    """Universal Sudoku loader that automatically adapts to the model architecture."""
+    """Create Sudoku data loaders."""
     train_dataset = SudokuDataset(
         train_dirs, cell_processor=cell_processor, for_resnet=for_resnet
     )
@@ -245,17 +214,7 @@ def get_sudoku_loaders(
 
 
 def get_mnist_loaders(data_dir, batch_size=32, for_resnet=False):
-    """
-    Create MNIST data loaders with automatic model adaptation.
-    
-    Args:
-        data_dir: Directory containing MNIST files
-        batch_size: Batch size for data loaders
-        for_resnet: If True, applies ResNet preprocessing
-    
-    Returns:
-        Tuple of (train_loader, test_loader)
-    """
+    """Create MNIST data loaders."""
     train_images, train_labels, test_images, test_labels = load_mnist(data_dir)
     model_type = "ResNet152" if for_resnet else "ConvNet"
     print(

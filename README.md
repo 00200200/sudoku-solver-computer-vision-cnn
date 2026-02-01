@@ -1,118 +1,104 @@
-# Sudoku Solver using Computer Vision and Deep Learning
+# Sudoku Solver with Computer Vision & Deep Learning
 
-This project implements an end-to-end pipeline for solving Sudoku puzzles from images using computer vision and deep learning techniques.
+Automated Sudoku puzzle solver using computer vision for grid extraction and deep learning for digit recognition.
 
-## Pipeline in Action
+## Features
 
-|                           Original Image                           |                               Extracted Grid                                |                         Solved Sudoku                          |
-| :----------------------------------------------------------------: | :-------------------------------------------------------------------------: | :------------------------------------------------------------: |
-| ![Original](results/pipeline_outputs/20250605_113638_original.jpg) | ![Extracted](results/pipeline_outputs/20250605_113638_extracted_sudoku.jpg) | ![Solved](results/pipeline_outputs/20250605_113638_solved.jpg) |
-|                          Raw input image                           |                           Detected & warped grid                            |                    Final solution overlaid                     |
-
-**Best Model:** ConvNet achieves **95.68% accuracy** on digit recognition with only 50K parameters.
+- **Image Processing**: Automatic Sudoku grid detection and cell extraction
+- **Digit Recognition**: CNN and ResNet152 models for handwritten digit classification
+- **Sudoku Solving**: Backtracking algorithm for puzzle solving
+- **Transfer Learning**: Pre-training on MNIST with fine-tuning on Sudoku datasets
 
 ## Project Structure
 
 ```
 src/
-├── model/                 # Neural network models
-│   ├── model.py          # ConvNet & ResNet152 architectures
-│   ├── predict.py        # Prediction functions
-│   └── solver.py         # Sudoku solving algorithm
-├── training/             # Training scripts
-│   ├── train_convnet_on_sudoku.py  # Best model training
-│   ├── train_convnet_on_mnist.py   # MNIST baseline
-│   └── train_resnet152_*.py        # ResNet variants
-├── finetuning/           # Transfer learning experiments
-├── evaluate/             # Model evaluation
-│   └── evaluate_all_models.py     # Comprehensive comparison
-├── data/                 # Data loading
-├── preprocess/           # Image preprocessing
-├── core/                 # Training utilities
-└── pipeline.py           # Main inference pipeline
+├── common/          # Utility functions (config, pickle)
+├── core/            # Training logic
+├── data/            # Dataset loaders (MNIST, Sudoku)
+├── evaluate/        # Model evaluation scripts
+├── model/           # Model architectures (ConvNet, ResNet152)
+├── preprocess/      # Image processing pipeline
+└── scripts/         # Main executable scripts
+    ├── train.py     # Universal training script
+    └── pipeline.py  # End-to-end Sudoku solver
 ```
-
-## Models
-
-### ConvNet (Primary Model)
-
-Our custom lightweight CNN architecture optimized specifically for Sudoku digit recognition:
-
-**Architecture:**
-
-- **Input**: 28x28 RGB images (converted from grayscale)
-- **Conv1**: 32 filters, 3x3 kernel, ReLU activation
-- **MaxPool**: 2x2 pooling
-- **Conv2**: 64 filters, 3x3 kernel, ReLU activation
-- **MaxPool**: 2x2 pooling
-- **FC1**: 64 x 7 x 7 → 64 neurons, ReLU activation
-- **FC2**: 64 → 10 classes (digits 0-9)
-
-**Specifications:**
-
-- Parameters: ~50,000 (lightweight and efficient)
-- Training time: ~10-15 minutes on GPU for 50 epochs
-- Inference: Real-time performance
-- Memory usage: Minimal
-
-
-
-## Results
-
-### Best Performing Models
-
-| Rank | Model                                          | Accuracy   | Training Approach       |
-| ---- | ---------------------------------------------- | ---------- | ----------------------- |
-| 1st  | **50epochs-convnet-sudoku-only**               | **95.68%** | Direct Sudoku training  |
-| 2nd  | 150epochs-convnet-sudoku-very-long-small-batch | 95.52%     | Extended training       |
-| 3rd  | 140epochs-convnet-sudoku-higher-lr-longer      | 95.37%     | Higher learning rate    |
-| 4th  | 100epochs-convnet-sudoku-larger-batch-lower-lr | 94.75%     | Batch size optimization |
-
 
 ## Quick Start
 
-### Installation
+### Training a Model
 
+Train ConvNet on MNIST:
 ```bash
-git clone https://github.com/00200200/sudoku-solver-computer-vision-cnn
-cd sudoku
-poetry install && poetry shell
+python src/scripts/train.py --model convnet --dataset mnist --epochs 10
 ```
 
-### Usage
-
-**Solve Sudoku from image:**
-
+Train ConvNet on Sudoku:
 ```bash
-python src/pipeline.py
+python src/scripts/train.py --model convnet --dataset sudoku --epochs 50
 ```
 
-**Train best model:**
-
+Fine-tune MNIST model on Sudoku:
 ```bash
-python src/training/train_convnet_on_sudoku.py
+python src/scripts/train.py --model convnet --dataset sudoku --epochs 40 \
+  --finetune models/10epochs_convnet_mnist.pkl --lr 0.0005
 ```
 
-**Evaluate all models:**
+See [TRAINING.md](TRAINING.md) for more training examples.
 
+### Solving a Sudoku Puzzle
+
+```bash
+python src/scripts/pipeline.py
+```
+
+Or use in Python:
+```python
+from src.scripts.pipeline import main_pipeline
+
+solution = main_pipeline(
+    image_path="path/to/sudoku.jpg",
+    model_path="models/50epochs_convnet_sudoku.pkl",
+    save_images=True,
+    show_images=True
+)
+```
+
+### Evaluating Models
+
+Evaluate all models in the models directory:
 ```bash
 python src/evaluate/evaluate_all_models.py
 ```
 
-## Tech Stack
+## Models
 
-**Core:** PyTorch, OpenCV, NumPy, scikit-learn, pandas  
-**Development:** Poetry, pre-commit hooks, black, isort  
-**Requirements:** Python 3.9+, CUDA GPU (recommended)
+### ConvNet
+- Simple CNN architecture for 28x28 digit images
+- 2 conv layers + 2 FC layers
+- Fast training and inference
 
-## Pipeline
+### ResNet152
+- Pre-trained on ImageNet with custom classification head
+- Fine-tuned for digit recognition
+- Higher accuracy but slower
 
-**Image → Grid Detection → Cell Recognition → Puzzle Solving → Solution Overlay**
+## Dependencies
 
-1. **Sudoku Detection**: Contour detection and perspective correction
-2. **Cell Extraction**: 81 individual 28x28 images
-3. **Digit Recognition**: ConvNet predicts 0-9 for each cell
-4. **Solving**: Backtracking algorithm completes the puzzle
-5. **Output**: Solution overlaid on original image
+- PyTorch
+- OpenCV (cv2)
+- NumPy
+- Pandas
+- scikit-learn
+- PyYAML
 
-**Best Model:** `50epochs-convnet-sudoku-only` - 95.68% accuracy, 50K parameters, <1s inference
+Install with:
+```bash
+poetry install
+```
+
+## Results
+
+Models are automatically evaluated and saved in `results/` directory with timestamps.
+
+Pipeline outputs (original image, extracted grid, solution) are saved in `results/pipeline_outputs/`.

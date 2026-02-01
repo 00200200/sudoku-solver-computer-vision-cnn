@@ -12,18 +12,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def overlay_digits(base_image, grid_digits, cell_coords, color=(0, 0, 0)):
-    """
-    Overlay digit predictions onto the Sudoku grid image.
-    
-    Args:
-        base_image: Base image to draw on
-        grid_digits: 9x9 grid of digit predictions
-        cell_coords: List of (x, y, w, h) coordinates for each cell
-        color: Color tuple for the text (B, G, R format)
-    
-    Returns:
-        Image with overlaid digits
-    """
+    """Overlay digit predictions onto Sudoku grid."""
     output_image = base_image.copy()
     for i in range(9):
         for j in range(9):
@@ -49,16 +38,7 @@ def overlay_digits(base_image, grid_digits, cell_coords, color=(0, 0, 0)):
 
 
 def predict_grid(model, cell_images):
-    """
-    Predict digits for each cell in the Sudoku grid.
-    
-    Args:
-        model: Trained digit recognition model
-        cell_images: List of 81 preprocessed cell images
-    
-    Returns:
-        9x9 grid of predicted digits (0-9)
-    """
+    """Predict digits for each cell in Sudoku grid."""
     model.eval()
     grid = [[0] * 9 for _ in range(9)]
 
@@ -84,18 +64,7 @@ def predict_grid(model, cell_images):
 def save_results(
     original_image, warped_sudoku, solved_image, output_dir="results/pipeline_outputs"
 ):
-    """
-    Save pipeline results with timestamp.
-    
-    Args:
-        original_image: Original input image
-        warped_sudoku: Extracted and warped Sudoku grid
-        solved_image: Sudoku grid with solution overlay
-        output_dir: Directory to save results
-    
-    Returns:
-        Timestamp string used for filenames
-    """
+    """Save pipeline results with timestamp."""
     os.makedirs(output_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -108,18 +77,7 @@ def save_results(
 
 
 def main_pipeline(image_path, model_path, save_images=True, show_images=True):
-    """
-    Complete pipeline to process a Sudoku image and solve it.
-    
-    Args:
-        image_path: Path to input Sudoku image
-        model_path: Path to trained digit recognition model
-        save_images: Whether to save intermediate and final results
-        show_images: Whether to display images in windows
-    
-    Returns:
-        Solved grid (9x9 list) or None if solving failed
-    """
+    """Process Sudoku image and solve the puzzle."""
     image = cv2.imread(image_path)
     if image is None:
         raise ValueError(f"Could not load image: {image_path}")

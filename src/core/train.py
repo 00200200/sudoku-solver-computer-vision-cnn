@@ -10,7 +10,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def train_model(model, train_loader, criterion, optimizer, num_epochs=10):
-    """Train the model for specified number of epochs."""
+    """Train model for specified epochs."""
     model.train()
     print(f"Starting training for {num_epochs} epochs...")
 

@@ -28,17 +28,7 @@ def solve(grid, row, col, num):
 
 
 def Sudoku(grid, row, col):
-    """
-    Solve Sudoku puzzle using backtracking algorithm.
-
-    Args:
-        grid: 9x9 grid with numbers 0-9 (0 means empty cell)
-        row: current row index
-        col: current column index
-
-    Returns:
-        bool: True if puzzle is solved, False otherwise
-    """
+    """Solve Sudoku puzzle using backtracking."""
     if row == M - 1 and col == M:
         return True
     if col == M:
