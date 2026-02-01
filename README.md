@@ -2,6 +2,13 @@
 
 Automated Sudoku puzzle solver using computer vision for grid extraction and deep learning for digit recognition.
 
+## Pipeline in Action
+
+|                           Original Image                           |                               Extracted Grid                                |                         Solved Sudoku                          |
+| :----------------------------------------------------------------: | :-------------------------------------------------------------------------: | :------------------------------------------------------------: |
+| ![Original](results/pipeline_outputs/20250605_113638_original.jpg) | ![Extracted](results/pipeline_outputs/20250605_113638_extracted_sudoku.jpg) | ![Solved](results/pipeline_outputs/20250605_113638_solved.jpg) |
+|                          Raw input image                           |                           Detected & warped grid                            |                    Final solution overlaid                     |
+
 ## Features
 
 - **Image Processing**: Automatic Sudoku grid detection and cell extraction
@@ -29,16 +36,19 @@ src/
 ### Training a Model
 
 Train ConvNet on MNIST:
+
 ```bash
 python src/scripts/train.py --model convnet --dataset mnist --epochs 10
 ```
 
 Train ConvNet on Sudoku:
+
 ```bash
 python src/scripts/train.py --model convnet --dataset sudoku --epochs 50
 ```
 
 Fine-tune MNIST model on Sudoku:
+
 ```bash
 python src/scripts/train.py --model convnet --dataset sudoku --epochs 40 \
   --finetune models/10epochs_convnet_mnist.pkl --lr 0.0005
@@ -53,6 +63,7 @@ python src/scripts/pipeline.py
 ```
 
 Or use in Python:
+
 ```python
 from src.scripts.pipeline import main_pipeline
 
@@ -67,6 +78,7 @@ solution = main_pipeline(
 ### Evaluating Models
 
 Evaluate all models in the models directory:
+
 ```bash
 python src/evaluate/evaluate_all_models.py
 ```
@@ -74,11 +86,13 @@ python src/evaluate/evaluate_all_models.py
 ## Models
 
 ### ConvNet
+
 - Simple CNN architecture for 28x28 digit images
 - 2 conv layers + 2 FC layers
 - Fast training and inference
 
 ### ResNet152
+
 - Pre-trained on ImageNet with custom classification head
 - Fine-tuned for digit recognition
 - Higher accuracy but slower
@@ -93,6 +107,7 @@ python src/evaluate/evaluate_all_models.py
 - PyYAML
 
 Install with:
+
 ```bash
 poetry install
 ```
