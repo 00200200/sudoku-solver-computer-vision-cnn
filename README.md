@@ -1,6 +1,8 @@
 # Sudoku Solver with Computer Vision & Deep Learning
 
-Automated Sudoku puzzle solver using computer vision for grid extraction and deep learning for digit recognition.
+An image-to-Sudoku experiment using OpenCV to extract the grid, a PyTorch CNN to
+recognize digits, and backtracking to solve the predicted puzzle. The repository
+also includes training and evaluation code for ConvNet and ResNet152.
 
 ## Pipeline in Action
 
@@ -33,54 +35,64 @@ src/
 
 ## Quick Start
 
+Install the dependencies with Python 3.11+ and Poetry, then run the commands
+from the repository root:
+
+```bash
+poetry install
+```
+
 ### Training a Model
 
 Train ConvNet on MNIST:
 
 ```bash
-python src/scripts/train.py --model convnet --dataset mnist --epochs 10
+poetry run python -m src.scripts.train --model convnet --dataset mnist --epochs 10
 ```
 
 Train ConvNet on Sudoku:
 
 ```bash
-python src/scripts/train.py --model convnet --dataset sudoku --epochs 50
+poetry run python -m src.scripts.train --model convnet --dataset sudoku --epochs 50
 ```
 
 Fine-tune MNIST model on Sudoku:
 
 ```bash
-python src/scripts/train.py --model convnet --dataset sudoku --epochs 40 \
+poetry run python -m src.scripts.train --model convnet --dataset sudoku --epochs 40 \
   --finetune models/10epochs_convnet_mnist.pkl --lr 0.0005
 ```
 
-See [TRAINING.md](TRAINING.md) for more training examples.
+Use `poetry run python -m src.scripts.train --help` for training options.
 
 ### Solving a Sudoku Puzzle
 
-```bash
-python src/scripts/pipeline.py
-```
-
-Or use in Python:
+Call the pipeline from Python in the Poetry environment, with paths to your
+image and a ConvNet checkpoint. The script's `__main__` example contains a local
+absolute path, so it needs adjustment before it can be run directly.
 
 ```python
 from src.scripts.pipeline import main_pipeline
 
 solution = main_pipeline(
     image_path="path/to/sudoku.jpg",
-    model_path="models/50epochs_convnet_sudoku.pkl",
+    model_path="models/50epochs_convnet_sudoku_only.pkl",
     save_images=True,
     show_images=True
 )
 ```
+
+The pipeline currently instantiates `ConvNet`; it does not select ResNet152 from
+the checkpoint. Incorrectly recognized digits can make the puzzle unsolvable
+or produce a solution to a different grid. Check the extracted digits against
+the input image.
 
 ### Evaluating Models
 
 Evaluate all models in the models directory:
 
 ```bash
-python src/evaluate/evaluate_all_models.py
+poetry run python -m src.evaluate.evaluate_all_models
 ```
 
 ## Models
@@ -89,13 +101,13 @@ python src/evaluate/evaluate_all_models.py
 
 - Simple CNN architecture for 28x28 digit images
 - 2 conv layers + 2 FC layers
-- Fast training and inference
+- Used by the image-to-Sudoku pipeline
 
 ### ResNet152
 
 - Pre-trained on ImageNet with custom classification head
 - Fine-tuned for digit recognition
-- Higher accuracy but slower
+- Available in the training code; compare saved evaluation results for a specific run
 
 ## Dependencies
 
